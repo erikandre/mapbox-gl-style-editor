@@ -4,6 +4,8 @@ var tilelive = require('tilelive');
 var path = require('path');
 var fs = require("fs");
 
+const MAX_ZOOM = 12;
+
 require('tilelive-bridge').registerProtocols(tilelive);
 
 var args = process.argv;
@@ -21,29 +23,67 @@ if (args < 4) {
 }
 
 var mapFile = path.resolve(__dirname, args[0]);
-var z = args[1];
-var x = args[2];
-var y = args[3];
+var originZ = args[1];
+var originX = args[2];
+var originY = args[3];
+
+var counter = 0;
+var zoomLevels = MAX_ZOOM - originZ;
+var totalCount = 0;
+while (zoomLevels >= 0 ) {
+  totalCount += Math.pow(4, zoomLevels);
+  zoomLevels--;
+}
 
 console.log('Loading data from ' + mapFile);
+
 tilelive.load("bridge://" + mapFile, function(err, source) {
     if (err) throw err;
-    console.log('Requesting tile');
-    // Interface is in XYZ/Google coordinates.
-    // Use `y = (1 << z) - 1 - y` to flip TMS coordinates.
-    source.getTile(z, x, y, function(err, tile, headers) {
-      if (err) throw err;
-      // `err` is an error object when generation failed, otherwise null.
-      // `tile` contains the compressed tile as a Buffer `headers` is a hash
-      // with HTTP headers for the image.
-      console.log('Created tile');
-      //console.log(headers);
-      var out = fs.createWriteStream('out-' + z + '-' + x + '-' + y + '.pbf');
-      out.on('finish', function () {
-        console.log('Finished writing to disk');
-        process.exit(0);
-      });
-      out.write(tile);
-      out.end();
+    processTileRecursive(source, originZ, originX, originY, function() {
+      console.log('Done!');
+      process.exit(0);
     });
 });
+
+function processTileRecursive(source, z, x, y, callback) {
+  processTile(source, z, x, y, function() {
+    if (z == MAX_ZOOM) {
+      callback();
+      return;
+    }
+    var nextZ = ++z;
+    var nextX = x * 2;
+    var nextY = y * 2;
+    // Process the four sub quads
+    processTileRecursive(source, nextZ, nextX, nextY, function() {
+        processTileRecursive(source, nextZ, nextX + 1, nextY, function() {
+          processTileRecursive(source, nextZ, nextX, nextY + 1, function() {
+            processTileRecursive(source, nextZ, nextX + 1, nextY + 1, function() {
+              callback();
+            });
+          });
+        });
+    });
+  });
+}
+
+function processTile(source, z, x, y, callback) {
+  console.log('Starting on tile ' + z + ' ' + x + ' ' + y);
+  // Interface is in XYZ/Google coordinates.
+  // Use `y = (1 << z) - 1 - y` to flip TMS coordinates.
+  source.getTile(z, x, y, function(err, tile, headers) {
+    if (err) throw err;
+    // `err` is an error object when generation failed, otherwise null.
+    // `tile` contains the compressed tile as a Buffer `headers` is a hash
+    // with HTTP headers for the image.
+    //console.log(headers);
+    var out = fs.createWriteStream('out-' + z + '-' + x + '-' + y + '.pbf');
+    out.on('finish', function () {
+      counter++;
+      console.log('Processed ' + counter + '/' + totalCount);
+      callback();
+    });
+    out.write(tile);
+    out.end();
+  });
+}
