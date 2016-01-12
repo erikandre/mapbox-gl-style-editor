@@ -2,4 +2,4 @@
 data/
 node_modules/
 npm-debug.log
-out.pbf
+*.pbf
