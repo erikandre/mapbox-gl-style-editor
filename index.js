@@ -6,15 +6,24 @@ var fs = require("fs");
 
 require('tilelive-bridge').registerProtocols(tilelive);
 
-if (process.argv.length < 6) {
+var args = process.argv;
+args.splice(0, 2); // Remove 'node' and the name of the script
+
+// Check for flags
+if (args[0] == '-r') {
+  console.log('Recursive mode enabled');
+  args.splice(0, 1);
+}
+
+if (args < 4) {
   console.error('Usage tile-conv <mapnik xlm file> <z> <x> <y>');
   process.exit(1);
 }
 
-var mapFile = path.resolve(__dirname, process.argv[2]);
-var z = process.argv[3];
-var x = process.argv[4];
-var y = process.argv[5];
+var mapFile = path.resolve(__dirname, args[0]);
+var z = args[1];
+var x = args[2];
+var y = args[3];
 
 console.log('Loading data from ' + mapFile);
 tilelive.load("bridge://" + mapFile, function(err, source) {
