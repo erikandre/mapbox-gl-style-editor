@@ -4,16 +4,19 @@ var tilelive = require('tilelive');
 var path = require('path');
 var fs = require("fs");
 
-const MAX_ZOOM = 12;
+const MAX_ZOOM = 14;
 
 require('tilelive-bridge').registerProtocols(tilelive);
 
 var args = process.argv;
 args.splice(0, 2); // Remove 'node' and the name of the script
 
+var recursive = false;
+
 // Check for flags
 if (args[0] == '-r') {
   console.log('Recursive mode enabled');
+  recursive = true;
   args.splice(0, 1);
 }
 
@@ -30,19 +33,31 @@ var originY = args[3];
 var counter = 0;
 var zoomLevels = MAX_ZOOM - originZ;
 var totalCount = 0;
-while (zoomLevels >= 0 ) {
-  totalCount += Math.pow(4, zoomLevels);
-  zoomLevels--;
+if (recursive) {
+  while (zoomLevels >= 0 ) {
+    totalCount += Math.pow(4, zoomLevels);
+    zoomLevels--;
+  }
+} else {
+  totalCount = 1;
 }
 
 console.log('Loading data from ' + mapFile);
 
 tilelive.load("bridge://" + mapFile, function(err, source) {
     if (err) throw err;
-    processTileRecursive(source, originZ, originX, originY, function() {
-      console.log('Done!');
-      process.exit(0);
-    });
+    if (recursive) {
+      processTileRecursive(source, originZ, originX, originY, function() {
+        console.log('Done!');
+        process.exit(0);
+      });
+    }
+    else {
+      processTile(source, originZ, originX, originY, function() {
+        console.log('Done!');
+        process.exit(0);
+      });
+    }
 });
 
 function processTileRecursive(source, z, x, y, callback) {
