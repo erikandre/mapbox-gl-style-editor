@@ -12,15 +12,24 @@ var args = process.argv;
 args.splice(0, 2); // Remove 'node' and the name of the script
 
 var recursive = false;
+var outputPrefix = 'out';
 
 // Check for flags
-if (args[0] == '-r') {
-  console.log('Recursive mode enabled');
-  recursive = true;
-  args.splice(0, 1);
+while (args.length > 0) {
+  if (args[0] == '-r') { // Recursive mode
+    recursive = true;
+    args.splice(0, 1);
+  }
+  else if (args[0] == '-p') { // Output prefix
+    outputPrefix = args[1];
+    args.splice(0, 2);
+  }
+  else {
+    break; // Done processing flags
+  }
 }
 
-if (args < 4) {
+if (args.length < 4) {
   console.error('Usage tile-conv <mapnik xlm file> <z> <x> <y>');
   process.exit(1);
 }
@@ -83,7 +92,7 @@ function processTileRecursive(source, z, x, y, callback) {
 }
 
 function processTile(source, z, x, y, callback) {
-  console.log('Starting on tile ' + z + ' ' + x + ' ' + y);
+  console.log('Processing tile ' + z + ' ' + x + ' ' + y);
   // Interface is in XYZ/Google coordinates.
   // Use `y = (1 << z) - 1 - y` to flip TMS coordinates.
   source.getTile(z, x, y, function(err, tile, headers) {
@@ -92,10 +101,10 @@ function processTile(source, z, x, y, callback) {
     // `tile` contains the compressed tile as a Buffer `headers` is a hash
     // with HTTP headers for the image.
     //console.log(headers);
-    var out = fs.createWriteStream('out-' + z + '-' + x + '-' + y + '.pbf');
+    var out = fs.createWriteStream(outputPrefix + '-' + z + '-' + x + '-' + y + '.pbf');
     out.on('finish', function () {
       counter++;
-      console.log('Processed ' + counter + '/' + totalCount);
+      console.log('Completed ' + counter + '/' + totalCount);
       callback();
     });
     out.write(tile);
