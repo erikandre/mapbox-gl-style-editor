@@ -3,6 +3,7 @@
 var tilelive = require('tilelive');
 var path = require('path');
 var fs = require("fs");
+var zlib = require("zlib");
 
 const MAX_ZOOM = 14;
 
@@ -70,8 +71,8 @@ tilelive.load("bridge://" + mapFile, function(err, source) {
 });
 
 function processTileRecursive(source, z, x, y, callback) {
-  processTile(source, z, x, y, function() {
-    if (z == MAX_ZOOM) {
+  processTile(source, z, x, y, function(empty) {
+    if (z == MAX_ZOOM || empty) {
       callback();
       return;
     }
@@ -96,18 +97,20 @@ function processTile(source, z, x, y, callback) {
   // Interface is in XYZ/Google coordinates.
   // Use `y = (1 << z) - 1 - y` to flip TMS coordinates.
   source.getTile(z, x, y, function(err, tile, headers) {
-    if (err) throw err;
-    // `err` is an error object when generation failed, otherwise null.
-    // `tile` contains the compressed tile as a Buffer `headers` is a hash
-    // with HTTP headers for the image.
-    //console.log(headers);
-    var out = fs.createWriteStream(outputPrefix + '-' + z + '-' + x + '-' + y + '.pbf');
-    out.on('finish', function () {
+    if (err) {
       counter++;
-      console.log('Completed ' + counter + '/' + totalCount);
-      callback();
+      callback(true);
+      return;
+    }
+    zlib.gunzip(tile, function(err, decompressed) {
+      var out = fs.createWriteStream(outputPrefix + '-' + z + '-' + x + '-' + y + '.pbf');
+      out.on('finish', function () {
+        counter++;
+        console.log('Completed ' + counter + '/' + totalCount);
+        callback(false);
+      });
+      out.write(decompressed);
+      out.end();
     });
-    out.write(tile);
-    out.end();
   });
 }
