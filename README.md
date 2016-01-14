@@ -10,7 +10,7 @@ Where z, x and y are the tiles coordinates in the Google Maps XYZ coordinate sys
 * -r: Recursive mode
 * -c: Enable gzip compression
 * -p <prefix>: Define prefix for output files
-* 
+
 # tile-serve
 
 An experimental map server. Not meant for production use but for working with maps locally without having to generate all the vector tiles beforehand.
