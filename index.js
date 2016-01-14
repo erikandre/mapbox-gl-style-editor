@@ -13,6 +13,7 @@ var args = process.argv;
 args.splice(0, 2); // Remove 'node' and the name of the script
 
 var recursive = false;
+var compress = false;
 var outputPrefix = 'out';
 
 // Check for flags
@@ -24,6 +25,10 @@ while (args.length > 0) {
   else if (args[0] == '-p') { // Output prefix
     outputPrefix = args[1];
     args.splice(0, 2);
+  }
+  else if (args[0] == '-c') { // Compression
+    compress = true;
+    args.splice(0, 1);
   }
   else {
     break; // Done processing flags
@@ -102,15 +107,31 @@ function processTile(source, z, x, y, callback) {
       callback(true);
       return;
     }
-    zlib.gunzip(tile, function(err, decompressed) {
-      var out = fs.createWriteStream(outputPrefix + '-' + z + '-' + x + '-' + y + '.pbf');
-      out.on('finish', function () {
-        counter++;
-        console.log('Completed ' + counter + '/' + totalCount);
-        callback(false);
+    var fileName = outputPrefix + '-' + z + '-' + x + '-' + y + '.pbf';
+    if (compress) {
+      fileName += '.gz';
+    }
+    var finishedCallback = function() {
+      counter++;
+      console.log('Completed ' + counter + '/' + totalCount);
+      callback(false);
+    };
+    if (compress) {
+      writeFile(fileName, tile, finishedCallback);
+    }
+    else {
+      zlib.gunzip(tile, function(err, decompressed) {
+        writeFile(fileName, decompressed, finishedCallback);
       });
-      out.write(decompressed);
-      out.end();
-    });
+    }
   });
+}
+
+function writeFile(fileName, data, callback) {
+  var out = fs.createWriteStream(fileName);
+  out.on('finish', function () {
+    callback();
+  });
+  out.write(data);
+  out.end();
 }
