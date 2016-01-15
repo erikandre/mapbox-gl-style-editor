@@ -46,19 +46,52 @@ function serveTilesSource(source) {
       var query = parsedUrl.query;
       var params = qs.parse(query);
       console.log('Requested z=' + params.z + ', x=' + params.x + ', y=' + params.y);
-      source.getTile(params.z, params.x, params.y, function(err, tile, headers) {
-        if (err) {
-          response.writeHead(404);
-          response.end();
-          console.error(err);
-          return;
-        }
+      loadFromCache(params.z, params.x, params.y, function(cachedTile) {
+        console.log('Loaded tile from cache');
+        var headers = {
+          'Content-Type': 'application/x-protobuf',
+          'Content-Encoding': 'gzip',
+          'x-tilelive-contains-data': true
+        };
         response.writeHead(200, 'OK', headers);
-        response.write(tile, 'binary');
+        response.write(cachedTile, 'binary');
         response.end();
+      }, function() {
+        // Cache miss
+        source.getTile(params.z, params.x, params.y, function(err, tile, headers) {
+          if (err) {
+            response.writeHead(404);
+            response.end();
+            console.error(err);
+            return;
+          }
+          writeToCache(params.z, params.x, params.y, tile, function() {
+            // Return response after saving to cache
+            response.writeHead(200, 'OK', headers);
+            response.write(tile, 'binary');
+            response.end();
+          });
+        });
       });
     }
   }).listen(port);
+}
+
+function loadFromCache(z, x, y, hit, miss) {
+  var fileName = path.resolve(__dirname, 'cache/' + z + '-' + x + '-' + y + '.pbf');
+  fs.readFile(fileName, 'binary', function(err, file) {
+    if (err) {
+      miss();
+    }
+    else {
+      hit(file);
+    }
+  });
+}
+
+function writeToCache(z, x, y, tile, callback) {
+  var fileName = path.resolve(__dirname, 'cache/' + z + '-' + x + '-' + y + '.pbf');
+  fs.writeFile(fileName, tile, 'binary', callback);
 }
 
 function serveStyle(response) {
