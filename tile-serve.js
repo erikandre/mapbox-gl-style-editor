@@ -48,7 +48,7 @@ function serveTilesSource(source) {
       console.log('Requested z=' + params.z + ', x=' + params.x + ', y=' + params.y);
       source.getTile(params.z, params.x, params.y, function(err, tile, headers) {
         if (err) {
-          response.writeHead(500);
+          response.writeHead(404);
           response.end();
           console.error(err);
           return;
