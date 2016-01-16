@@ -17,8 +17,22 @@ An experimental map server. Not meant for production use but for working with ma
 
 ## Usage
 ```
-./tile-serve.js <Mapnik xml file>
+./tile-serve.js [-s <json style file>] <Mapnik xml file>
 ```
+
+Where -s <json style file> can be used to serve an existing Mapbox GL Style file. If no style is specified one will be generated based on the XML style data from the Mapnik XML file.
+
+# style-conv
+
+An experimental tool for converting Mapnik XML styles to [Mapbox GL Styles](https://www.mapbox.com/mapbox-gl-style-spec/).
+
+## Usage
+
+```
+./style-conv.js <Mapnik xml file> <output file> <tile URL>
+```
+
+Where the tile URL is a local or remote URL specifying the location of the vector tiles data (e.g http://localhost:8080/map?z={z}&x={x}&y={y})
 
 # Project Roadmap
 
@@ -26,7 +40,7 @@ An experimental map server. Not meant for production use but for working with ma
 * Define tile coordinate ranges
 * ~~File output prefixes~~
 * Export to single .mbtiles file
-* Generate Mapbox gl styles based on Mapnik XML styles
+* Generate Mapbox gl styles based on Mapnik XML styles (ongoing)
 
 # Dependencies
 
