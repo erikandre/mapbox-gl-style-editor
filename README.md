@@ -17,8 +17,10 @@ An experimental map server. Not meant for production use but for working with ma
 
 ## Usage
 ```
-./tile-serve.js <Mapnik xml file>
+./tile-serve.js [-s <json style file>] <Mapnik xml file>
 ```
+
+Where -s <json style file> can be used to serve an existing Mapbox GL Style file.
 
 # style-conv
 
