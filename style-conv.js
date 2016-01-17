@@ -98,11 +98,14 @@ function processRule(output, rule, layername, sourcename) {
 		throw Error('No or unsupported symbolizer in rule: ' + JSON.stringify(rule, null, 3));
 	}
 	var fill = false;
+	var zoom = {};
 	if (rule.hasOwnProperty('MaxScaleDenominator')) {
-		style['minzoom'] = getZoomLevel(rule['MaxScaleDenominator'][0]);
+		//style['minzoom'] = getZoomLevel(rule['MaxScaleDenominator'][0]);
+		zoom.min = getZoomLevel(rule['MaxScaleDenominator'][0]);
 	}
 	if (rule.hasOwnProperty('MinScaleDenominator')) {
-		style['maxzoom'] = getZoomLevel(rule['MinScaleDenominator'][0]);
+		//style['maxzoom'] = getZoomLevel(rule['MinScaleDenominator'][0]);
+		zoom.max = getZoomLevel(rule['MinScaleDenominator'][0]);
 	}
 	if (rule.hasOwnProperty('PolygonSymbolizer')) {
 		fill = true;
@@ -117,7 +120,7 @@ function processRule(output, rule, layername, sourcename) {
 			// Mapnik uses LineSymbolizer for fill outlines as well
 			processFillOutline(rule, style, paint);
 		} else {
-			processLineSymbolizer(rule, style, paint);
+			processLineSymbolizer(rule, style, paint, zoom);
 		}
 	}
 	if (rule.hasOwnProperty('MarkersSymbolizer')) {
@@ -128,6 +131,12 @@ function processRule(output, rule, layername, sourcename) {
 	}
 	if (rule.hasOwnProperty('Filter') && rule.Filter.length > 0) {
 		style['filter'] = processFilter(rule.Filter);
+	}
+	if (zoom.hasOwnProperty('min')) {
+		style['minzoom'] = zoom.min;
+	}
+	if (zoom.hasOwnProperty('max')) {
+		style['maxzoom'] = zoom.max;
 	}
 	style['paint'] = paint;
 	output.push(style);
@@ -207,7 +216,7 @@ function processFillOutline(rule, style, paint) {
 	}
 }
 
-function processLineSymbolizer(rule, style, paint) {
+function processLineSymbolizer(rule, style, paint, zoom) {
 	// TODO: Support multiple symbolizers for each rule
 	var params = rule.LineSymbolizer[0].$;
 	style['type'] = 'line';
@@ -220,9 +229,25 @@ function processLineSymbolizer(rule, style, paint) {
 	if (params.hasOwnProperty('stroke-width')) {
 		var lineWidth = {};
 		paint['line-width'] = lineWidth;
-		lineWidth['base'] = 1.0;
+		lineWidth['base'] = 1.0;2
 		// TODO: Generate stops
-		lineWidth['stops'] = [ [ 0, parseFloat(params['stroke-width']) ] ];
+		var width = parseFloat(params['stroke-width']);
+		var stops = [];
+		if (zoom.hasOwnProperty('min')) {
+			stops.push([zoom.min-1, 0.0]);
+			stops.push([zoom.min, width]);
+			zoom.min--;
+		}
+		if (zoom.hasOwnProperty('max')) {
+			stops.push([zoom.max, width]);
+			stops.push([zoom.max + 1, 0]);
+			zoom.max++;
+		}
+		if (zoom.length == 0) {
+			stops.push([0, width]);
+		}
+		lineWidth['stops'] = stops;
+		
 	}
 }
 
