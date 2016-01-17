@@ -2,6 +2,7 @@
 data/
 node_modules/
 npm-debug.log
-*.pbf
+out/*.pbf
+cache/*.pbf
 out
 style.json

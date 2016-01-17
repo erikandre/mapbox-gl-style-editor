@@ -48,6 +48,10 @@ function convert(xmlFile, tileUrl, callback) {
 			result.Map.Style.forEach(function(layer) {
 				processLayer(output, layer);
 			});
+			// Sort by layer type
+			output.sort(function(left, right) {
+				return getLayerTypeSortingValue(left.type) - getLayerTypeSortingValue(right.type); 
+			});
 			var glStyle = {};
 			// Vector source
 			var sources = {};
@@ -57,12 +61,25 @@ function convert(xmlFile, tileUrl, callback) {
 			map['tiles'] = [ tileUrl ];
 			map['maxzoom'] = 14; // Read from xml Parameters field
 			sources['map'] = map;
+			glStyle['glyphs'] = 'http://localhost:8080/font?name={fontstack}&range={range}.pbf';
 			glStyle['sources'] = sources;
 			glStyle['layers'] = output;
 			var json = JSON.stringify(glStyle, null, 3);
 			callback(json);
 		});
 	});
+}
+
+function getLayerTypeSortingValue(type) {
+	if (type == 'fill') {
+		return 0;
+	}
+	if (type == 'line') {
+		return 1;
+	}
+	if (type == 'symbol') {
+		return 2;
+	}
 }
 
 function processLayer(output, layer) {
@@ -80,7 +97,7 @@ function processLayer(output, layer) {
 			}
 		}
 	})
-	layerRules.reverse().forEach(function(rule) {
+	layerRules.forEach(function(rule) {
 		output.push(rule);
 	});
 }
@@ -88,6 +105,7 @@ function processLayer(output, layer) {
 function processRule(output, rule, layername, sourcename) {
 	var style = {};
 	var paint = {};
+	var layout = {};
 	var filter = [];
 	var id = layername + '-';
 	id += ++idCounter;
@@ -127,7 +145,7 @@ function processRule(output, rule, layername, sourcename) {
 		processMarkersSymbolizer(rule, style, paint);
 	}
 	if (rule.hasOwnProperty('TextSymbolizer')) {
-		processTextSymbolizer(rule, style, paint);
+		processTextSymbolizer(rule, style, layout, paint);
 	}
 	if (rule.hasOwnProperty('Filter') && rule.Filter.length > 0) {
 		style['filter'] = processFilter(rule.Filter);
@@ -139,17 +157,18 @@ function processRule(output, rule, layername, sourcename) {
 		style['maxzoom'] = zoom.max;
 	}
 	style['paint'] = paint;
+	style['layout'] = layout;
 	output.push(style);
 	console.log('Created style ' + id);
 }
 
-function processTextSymbolizer(rule, style, paint) {
+function processTextSymbolizer(rule, layer, layout, paint) {
 	// TODO: Support multiple symbolizers for each rule
 	var params = rule.TextSymbolizer[0].$;
-	style['type'] = 'symbol';
-	style['text-field'] = processOperand(rule.TextSymbolizer[0]._);
+	layer['type'] = 'symbol';
+	layout['text-field'] = '{' + processOperand(rule.TextSymbolizer[0]._) + '}';
 	if (params.hasOwnProperty('face-name')) {
-		style['text-font'] = [ params['face-name'] ];
+		//layout['text-font'] = [ params['face-name'] ];
 	}
 	if (params.hasOwnProperty('fill')) { // Text color
 		paint['text-color'] = params['fill'];
@@ -161,12 +180,12 @@ function processTextSymbolizer(rule, style, paint) {
 		paint['text-halo-width'] = processOperand(params['halo-radius']);
 	}
 	if (params.hasOwnProperty('size')) {
-		style['text-size'] = processOperand(params['size']);
+		layout['text-size'] = processOperand(params['size']);
 	}
-	if (params.hasOwnProperty('orientation')) {
-		style['text-rotate'] = processOperand(params['orientation']);
-	}
-	style['text-anchor'] = processTextAlignment(params);
+//	if (params.hasOwnProperty('orientation')) {
+//		layout['text-rotate'] = '{' + processOperand(params['orientation']) + '}';
+//	}
+	layout['text-anchor'] = processTextAlignment(params);
 }
 
 function processPolygonPatternSymbolizer(rule, style, paint) {

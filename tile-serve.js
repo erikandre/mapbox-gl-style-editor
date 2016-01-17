@@ -54,6 +54,8 @@ function serveTilesSource(source, style) {
 			// Ignored
 			response.writeHead(404);
 			response.end();
+		} else if (parsedUrl.pathname == '/font') {
+			serveFont(response, parsedUrl);
 		} else {
 			// Serve a tile
 			var query = parsedUrl.query;
@@ -88,6 +90,20 @@ function serveTilesSource(source, style) {
 			});
 		}
 	}).listen(port);
+}
+
+function serveFont(response, url) {
+	var query = url.query;
+	var params = qs.parse(query);
+	var fileName = path.resolve(__dirname, 'font/' + params.name.split(',')[0] + '/' + params.range);
+	fs.readFile(fileName, 'binary', function(err, file) {
+		if (err) {
+			throw err;
+		}
+		response.writeHead(200);
+		response.write(file, 'binary');
+		response.end();
+	});
 }
 
 function loadFromCache(z, x, y, hit, miss) {
