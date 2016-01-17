@@ -219,10 +219,10 @@ function processLineSymbolizer(rule, style, paint) {
 	}
 	if (params.hasOwnProperty('stroke-width')) {
 		var lineWidth = {};
-		lineWidth['base'] = parseFloat(params['stroke-width']);
 		paint['line-width'] = lineWidth;
+		lineWidth['base'] = 1.0;
 		// TODO: Generate stops
-		lineWidth['stops'] = [ [ 0, 1 ] ];
+		lineWidth['stops'] = [ [ 0, parseFloat(params['stroke-width']) ] ];
 	}
 }
 
