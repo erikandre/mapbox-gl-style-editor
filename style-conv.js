@@ -247,8 +247,19 @@ function processLineSymbolizer(rule, style, paint, zoom) {
 			stops.push([0, width]);
 		}
 		lineWidth['stops'] = stops;
-		
+		// Easier if we make dash dependent on the stroke
+		if (params.hasOwnProperty('stroke-dasharray')) {
+			paint['line-dasharray'] = processDashArray(params['stroke-dasharray'], width);
+		}
 	}
+}
+
+function processDashArray(value, width) {
+	var result = [];
+	value.split(',').forEach(function(token) {
+		result.push(Math.min(1, parseInt(token, 10) / width) * 2.5);
+	});
+	return result;
 }
 
 function processFilter(filters) {
