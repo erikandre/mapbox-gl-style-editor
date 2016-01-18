@@ -10,6 +10,7 @@ module.exports = {
 var path = require('path');
 var fs = require("fs");
 var xml2js = require('xml2js');
+var HashMap = require('hashmap');
 
 var idCounter = 0; // Used to ensure that styles have unique ids
 
@@ -50,7 +51,7 @@ function convert(xmlFile, tileUrl, callback) {
 			});
 			// Sort by layer type
 			output.sort(function(left, right) {
-				return getLayerTypeSortingValue(left.type) - getLayerTypeSortingValue(right.type); 
+				return getLayerTypeSortingValue(left.type) - getLayerTypeSortingValue(right.type);
 			});
 			var glStyle = {};
 			// Vector source
@@ -84,25 +85,164 @@ function getLayerTypeSortingValue(type) {
 
 function processLayer(output, layer) {
 	console.log('Processing layer: ' + layer.$.name);
-	console.log('Found ' + layer.Rule.length + ' rules');
 	var layerRules = [];
-	layer.Rule.forEach(function(rule) {
+	var mergedRules = mergeRules(layer.Rule);
+	mergedRules.forEach(function(rule) {
 		try {
 			processRule(layerRules, rule, layer.$.name, 'map');
 		} catch (err) {
 			if (err == 'skip') {
-				console.log('Skipped problematic rule: ' + JSON.stringify(rule, null, 3));
+				console.error('Skipped problematic rule: ' + JSON.stringify(rule, null, 3));
 			} else {
 				throw err;
 			}
 		}
 	})
 	layerRules.forEach(function(rule) {
+		cleanupStops(rule);
 		output.push(rule);
 	});
 }
 
+function cleanupStops(rule) {
+	if (rule.paint.hasOwnProperty('line-width')) {
+		var lineWidth = rule.paint['line-width'];
+		if (lineWidth.hasOwnProperty('stops')) {
+			var stops = lineWidth['stops'];
+			stops.forEach(function(stop) {
+				if (stop.length = 3) {
+					stop.pop();
+				}
+			});
+		}
+	}
+}
+
+function mergeRules(rules) {
+	var ruleMap = {};
+	rules.forEach(function(rule) {
+		var key = getRuleKey(rule);
+		if (ruleMap.hasOwnProperty(key)) {
+			ruleMap[key].push(rule);
+		} else {
+			ruleMap[key] = [ rule ];
+		}
+	});
+	var result = [];
+	for ( var key in ruleMap) {
+		if (ruleMap.hasOwnProperty(key)) {
+			var group = ruleMap[key];
+			if (canMergeRules(group)) {
+				console.log('Merging ' + ruleMap[key].length + ' rules');
+				result.push(group);
+			} else {
+				result.push(group[0]);
+			}
+		}
+	}
+	return result;
+}
+
+function canMergeRules(rules) {
+	var main = rules[0];
+	return (rules.length > 1 && main.hasOwnProperty('LineSymbolizer') && !main.hasOwnProperty('PolygonSymbolizer')
+			&& !main.hasOwnProperty('PolygonPatternSymbolizer') && !main.hasOwnProperty('MarkersSymbolizer') && !main.hasOwnProperty('TextSymbolizer'));
+}
+
+function getRuleKey(rule) {
+	var key = 'key-';
+	if (rule.hasOwnProperty('Filter')) {
+		key += JSON.stringify(rule['Filter']);
+	} else {
+		key += 'noFilter';
+	}
+	key += '-';
+	if (rule.hasOwnProperty('PolygonSymbolizer')) {
+		key += 'PolygonSymbolizer'
+	}
+	if (rule.hasOwnProperty('PolygonPatternSymbolizer')) {
+		key += 'PolygonPatternSymbolizer';
+	}
+	if (rule.hasOwnProperty('LineSymbolizer')) {
+		key += 'LineSymbolizer';
+	}
+	if (rule.hasOwnProperty('MarkersSymbolizer')) {
+		key += 'MarkersSymbolizer';
+	}
+	if (rule.hasOwnProperty('TextSymbolizer')) {
+		key += 'TextSymbolizer';
+	}
+	return key;
+}
+
+function mergeStyles(styles) {
+	// TODO Support other symbolizers
+	var stops = [];
+	var minZoom = null;
+	var maxZoom = null;
+	styles.forEach(function(style) {
+		
+		style.paint['line-width'].stops.forEach(function(stop) {
+			if (stop.length == 2) { // Filter out extrapolated stops
+				if (style.hasOwnProperty('minzoom')) {
+					if (minZoom == null || style.minzoom < minZoom) {
+						minZoom = style.minzoom;
+					}
+				}
+				if (style.hasOwnProperty('maxzoom')) {
+					if (maxZoom == null || style.maxzoom < maxZoom) {
+						maxZoom = style.maxzoom;
+					}
+				}
+				stops.push(stop);
+			}
+		})
+	});
+	// Remove conflicting stops
+	var filteredStops = [];
+	var levels = {};
+	stops.forEach(function(stop) {
+		if (!levels.hasOwnProperty(stop[0])) {
+			levels[stop[0]] = 1;
+			filteredStops.push(stop);
+		}
+	});
+	// Add stops for zoom limits
+	filteredStops.forEach(function(stop) {
+		if (stop[0] < minZoom) {
+			minZoom = null;
+		}
+		if (stop[0] > maxZoom) {
+			maxZoom = null;
+		}
+	});
+	var result = styles[0];
+	if (minZoom != null) {
+		filteredStops.push([minZoom , 0]);
+		result.minzoom = minZoom;
+	}
+	if (maxZoom != null) {
+		filteredStops.push([maxZoom, 0]);
+		result.maxzoom = maxZoom;
+	}
+	// Sort stops in ascending order
+	filteredStops.sort(function(a, b) {
+		return a[0] - b[0];
+	});
+	
+	result.paint['line-width'].stops = filteredStops;
+	return result;
+}
+
 function processRule(output, rule, layername, sourcename) {
+	if (isArray(rule)) {
+		var styleGroup = [];
+		rule.forEach(function(subRule) {
+			processRule(styleGroup, subRule, layername, sourcename);
+		});
+		output.push(mergeStyles(styleGroup));
+		return;
+	}
 	var style = {};
 	var paint = {};
 	var layout = {};
@@ -118,11 +258,9 @@ function processRule(output, rule, layername, sourcename) {
 	var fill = false;
 	var zoom = {};
 	if (rule.hasOwnProperty('MaxScaleDenominator')) {
-		//style['minzoom'] = getZoomLevel(rule['MaxScaleDenominator'][0]);
 		zoom.min = getZoomLevel(rule['MaxScaleDenominator'][0]);
 	}
 	if (rule.hasOwnProperty('MinScaleDenominator')) {
-		//style['maxzoom'] = getZoomLevel(rule['MinScaleDenominator'][0]);
 		zoom.max = getZoomLevel(rule['MinScaleDenominator'][0]);
 	}
 	if (rule.hasOwnProperty('PolygonSymbolizer')) {
@@ -159,7 +297,6 @@ function processRule(output, rule, layername, sourcename) {
 	style['paint'] = paint;
 	style['layout'] = layout;
 	output.push(style);
-	console.log('Created style ' + id);
 }
 
 function processTextSymbolizer(rule, layer, layout, paint) {
@@ -168,7 +305,7 @@ function processTextSymbolizer(rule, layer, layout, paint) {
 	layer['type'] = 'symbol';
 	layout['text-field'] = '{' + processOperand(rule.TextSymbolizer[0]._) + '}';
 	if (params.hasOwnProperty('face-name')) {
-		//layout['text-font'] = [ params['face-name'] ];
+		// layout['text-font'] = [ params['face-name'] ];
 	}
 	if (params.hasOwnProperty('fill')) { // Text color
 		paint['text-color'] = params['fill'];
@@ -182,9 +319,9 @@ function processTextSymbolizer(rule, layer, layout, paint) {
 	if (params.hasOwnProperty('size')) {
 		layout['text-size'] = processOperand(params['size']);
 	}
-//	if (params.hasOwnProperty('orientation')) {
-//		layout['text-rotate'] = '{' + processOperand(params['orientation']) + '}';
-//	}
+	// if (params.hasOwnProperty('orientation')) {
+	// layout['text-rotate'] = '{' + processOperand(params['orientation']) + '}';
+	// }
 	layout['text-anchor'] = processTextAlignment(params);
 }
 
@@ -248,22 +385,24 @@ function processLineSymbolizer(rule, style, paint, zoom) {
 	if (params.hasOwnProperty('stroke-width')) {
 		var lineWidth = {};
 		paint['line-width'] = lineWidth;
-		lineWidth['base'] = 1.0;2
-		// TODO: Generate stops
+		lineWidth['base'] = 1.0;
+		// Generate stops
 		var width = parseFloat(params['stroke-width']);
 		var stops = [];
 		if (zoom.hasOwnProperty('min')) {
-			stops.push([zoom.min-1, 0.0]);
-			stops.push([zoom.min, width]);
+			// Add extra element to keep track of which ones are extrapolated
+			stops.push([ zoom.min - 1, 0.0, 0 ]);
+			stops.push([ zoom.min, width ]);
 			zoom.min--;
 		}
 		if (zoom.hasOwnProperty('max')) {
-			stops.push([zoom.max, width]);
-			stops.push([zoom.max + 1, 0]);
+			// Add extra element to keep track of which ones are extrapolated
+			stops.push([ zoom.max, width]);
+			stops.push([ zoom.max + 1, 0, 0 ]);
 			zoom.max++;
 		}
 		if (zoom.length == 0) {
-			stops.push([0, width]);
+			stops.push([ 0, width ]);
 		}
 		lineWidth['stops'] = stops;
 		// Easier if we make dash dependent on the stroke
@@ -304,7 +443,7 @@ function processFilter(filters) {
 	if (filters.length > 1) {
 		throw Error('Invalid filter, merging failed! ' + filters);
 	}
-	console.log('Filters: ' + outFilter[0]);
+	// console.log('Filters: ' + outFilter[0]);
 	return outFilter[0];
 }
 
@@ -452,4 +591,8 @@ function processTextAlignment(params) {
 		return 'bottom-right';
 	}
 	throw Error('Invalid text alignment: ' + params);
+}
+
+function isArray(o) {
+	return Object.prototype.toString.call(o) === '[object Array]';
 }
