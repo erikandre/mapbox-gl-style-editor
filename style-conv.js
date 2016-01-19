@@ -181,7 +181,7 @@ function mergeStyles(styles) {
 	var minZoom = null;
 	var maxZoom = null;
 	styles.forEach(function(style) {
-		
+
 		style.paint['line-width'].stops.forEach(function(stop) {
 			if (stop.length == 2) { // Filter out extrapolated stops
 				if (style.hasOwnProperty('minzoom')) {
@@ -218,18 +218,18 @@ function mergeStyles(styles) {
 	});
 	var result = styles[0];
 	if (minZoom != null) {
-		filteredStops.push([minZoom , 0]);
+		filteredStops.push([ minZoom, 0 ]);
 		result.minzoom = minZoom;
 	}
 	if (maxZoom != null) {
-		filteredStops.push([maxZoom, 0]);
+		filteredStops.push([ maxZoom, 0 ]);
 		result.maxzoom = maxZoom;
 	}
 	// Sort stops in ascending order
 	filteredStops.sort(function(a, b) {
 		return a[0] - b[0];
 	});
-	
+
 	result.paint['line-width'].stops = filteredStops;
 	return result;
 }
@@ -319,6 +319,7 @@ function processTextSymbolizer(rule, layer, layout, paint) {
 	if (params.hasOwnProperty('size')) {
 		layout['text-size'] = processOperand(params['size']);
 	}
+	// Currently Mapbox GL does not support using an expression (referncing a field) to specify rotation
 	// if (params.hasOwnProperty('orientation')) {
 	// layout['text-rotate'] = '{' + processOperand(params['orientation']) + '}';
 	// }
@@ -397,7 +398,7 @@ function processLineSymbolizer(rule, style, paint, zoom) {
 		}
 		if (zoom.hasOwnProperty('max')) {
 			// Add extra element to keep track of which ones are extrapolated
-			stops.push([ zoom.max, width]);
+			stops.push([ zoom.max, width ]);
 			stops.push([ zoom.max + 1, 0, 0 ]);
 			zoom.max++;
 		}
