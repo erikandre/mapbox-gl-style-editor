@@ -25,20 +25,18 @@ if (args[0] == '-s') { // Use an existing style
 	});
 } else {
 	var mapFile = path.resolve(__dirname, args[0]);
-	styleConv.convertStyle(mapFile, 'http://localhost:8080/map?z={z}&x={x}&y={y}', function(jsonStyle) {
-		startServing(mapFile, jsonStyle);
-	});
+	startServing(mapFile, null);
 }
 
 function startServing(mapFile, style) {
 	tilelive.load("bridge://" + mapFile, function(err, source) {
 		if (err)
 			throw err;
-		serveTilesSource(source, style);
+		serveTilesSource(mapFile, source, style);
 	});
 }
 
-function serveTilesSource(source, style) {
+function serveTilesSource(mapFile, source, style) {
 	console.log('Serving tiles from ' + mapFile + " at port " + port);
 	http.createServer(function(request, response) {
 		// Parse request to get tile coordinates
@@ -49,7 +47,7 @@ function serveTilesSource(source, style) {
 			serveMapPage(response);
 		} else if (parsedUrl.pathname == '/style.json') {
 			// Serve the map style
-			serveStyle(response, style);
+			serveStyle(response, mapFile, style);
 		} else if (parsedUrl.pathname == '/favicon.ico') {
 			// Ignored
 			response.writeHead(404);
@@ -122,18 +120,28 @@ function writeToCache(z, x, y, tile, callback) {
 	fs.writeFile(fileName, tile, 'binary', callback);
 }
 
-function serveStyle(response, style) {
-	response.writeHead(200);
-	response.write(style, 'utf8');
-	response.end();
+function serveStyle(response, mapFile, style) {
+	if (style == null) {
+		// No precompiled style loaded, need to generate it on the fly
+		styleConv.convertStyle(mapFile, 'http://localhost:8080/map?z={z}&x={x}&y={y}', function(jsonStyle) {
+			serveStringResponse(response, jsonStyle);
+		});
+	}
+	else {
+		serveStringResponse(response, style);
+	}
 }
 
 function serveMapPage(response) {
 	fs.readFile(path.resolve(__dirname, 'index.html'), 'utf8', function(err, file) {
 		if (err)
 			throw err;
-		response.writeHead(200);
-		response.write(file, 'utf8');
-		response.end();
+		serveStringResponse(response, file);
 	});
+}
+
+function serveStringResponse(response, data) {
+	response.writeHead(200);
+	response.write(data, 'utf8');
+	response.end();
 }

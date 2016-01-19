@@ -10,7 +10,6 @@ module.exports = {
 var path = require('path');
 var fs = require("fs");
 var xml2js = require('xml2js');
-var HashMap = require('hashmap');
 
 var idCounter = 0; // Used to ensure that styles have unique ids
 
