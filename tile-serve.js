@@ -16,27 +16,23 @@ if (args.length < 1) {
 	console.error('Usage: tile-serve [-s <json style file>] <mapnik xlm file>');
 	process.exit(1);
 }
+var styleFile = null;
 if (args[0] == '-s') { // Use an existing style
 	var styleFile = path.resolve(__dirname, args[1]);
 	args.splice(0, 2);
-	var mapFile = path.resolve(__dirname, args[0]);
-	fs.readFile(styleFile, 'utf8', function(err, data) {
-		startServing(mapFile, data);
-	});
-} else {
-	var mapFile = path.resolve(__dirname, args[0]);
-	startServing(mapFile, null);
 }
+var mapFile = path.resolve(__dirname, args[0]);
+startServing(mapFile, styleFile);
 
-function startServing(mapFile, style) {
+function startServing(mapFile, styleFile) {
 	tilelive.load("bridge://" + mapFile, function(err, source) {
 		if (err)
 			throw err;
-		serveTilesSource(mapFile, source, style);
+		serveTilesSource(mapFile, styleFile, source);
 	});
 }
 
-function serveTilesSource(mapFile, source, style) {
+function serveTilesSource(mapFile, styleFile, source) {
 	console.log('Serving tiles from ' + mapFile + " at port " + port);
 	http.createServer(function(request, response) {
 		// Parse request to get tile coordinates
@@ -47,7 +43,7 @@ function serveTilesSource(mapFile, source, style) {
 			serveMapPage(response);
 		} else if (parsedUrl.pathname == '/style.json') {
 			// Serve the map style
-			serveStyle(response, mapFile, style);
+			serveStyle(response, mapFile, styleFile);
 		} else if (parsedUrl.pathname == '/favicon.ico') {
 			// Ignored
 			response.writeHead(404);
@@ -120,15 +116,17 @@ function writeToCache(z, x, y, tile, callback) {
 	fs.writeFile(fileName, tile, 'binary', callback);
 }
 
-function serveStyle(response, mapFile, style) {
-	if (style == null) {
+function serveStyle(response, mapFile, styleFile) {
+	if (styleFile == null) {
 		// No precompiled style loaded, need to generate it on the fly
 		styleConv.convertStyle(mapFile, 'http://localhost:8080/map?z={z}&x={x}&y={y}', function(jsonStyle) {
 			serveStringResponse(response, jsonStyle);
 		});
 	}
 	else {
-		serveStringResponse(response, style);
+		fs.readFile(styleFile, 'utf8', function(err, style) {
+			serveStringResponse(response, style);
+		});
 	}
 }
 
