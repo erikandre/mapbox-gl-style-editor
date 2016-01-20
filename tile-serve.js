@@ -22,6 +22,7 @@ if (args[0] == '-s') { // Use an existing style
 	args.splice(0, 2);
 }
 var mapFile = path.resolve(__dirname, args[0]);
+var cachePrefix = path.parse(mapFile).name;
 startServing(mapFile, styleFile);
 
 function startServing(mapFile, styleFile) {
@@ -101,7 +102,7 @@ function serveFont(response, url) {
 }
 
 function loadFromCache(z, x, y, hit, miss) {
-	var fileName = path.resolve(__dirname, 'cache/' + z + '-' + x + '-' + y + '.pbf');
+	var fileName = path.resolve(__dirname, 'cache/'  + cachePrefix + '-' + z + '-' + x + '-' + y + '.pbf');
 	fs.readFile(fileName, 'binary', function(err, file) {
 		if (err) {
 			miss();
@@ -112,7 +113,7 @@ function loadFromCache(z, x, y, hit, miss) {
 }
 
 function writeToCache(z, x, y, tile, callback) {
-	var fileName = path.resolve(__dirname, 'cache/' + z + '-' + x + '-' + y + '.pbf');
+	var fileName = path.resolve(__dirname, 'cache/' + cachePrefix + '-' + z + '-' + x + '-' + y + '.pbf');
 	fs.writeFile(fileName, tile, 'binary', callback);
 }
 

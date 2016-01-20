@@ -74,12 +74,16 @@ function getLayerTypeSortingValue(type) {
 	if (type == 'fill') {
 		return 0;
 	}
-	if (type == 'line') {
+	else if (type == 'line') {
 		return 1;
 	}
-	if (type == 'symbol') {
+	else if (type == 'circle') {
+		return 1;
+	}
+	else if (type == 'symbol') {
 		return 2;
 	}
+	throw Error('Type not supported: ' + type);
 }
 
 function processLayer(output, layer) {
@@ -255,6 +259,8 @@ function processRule(output, rule, layername, sourcename) {
 		throw Error('No or unsupported symbolizer in rule: ' + JSON.stringify(rule, null, 3));
 	}
 	var fill = false;
+	var text = false;
+	var marker = false;
 	var zoom = {};
 	if (rule.hasOwnProperty('MaxScaleDenominator')) {
 		zoom.min = getZoomLevel(rule['MaxScaleDenominator'][0]);
@@ -270,19 +276,37 @@ function processRule(output, rule, layername, sourcename) {
 		fill = true;
 		processPolygonPatternSymbolizer(rule, style, paint);
 	}
+	if (rule.hasOwnProperty('TextSymbolizer')) {
+		text = true;
+		processTextSymbolizer(rule, style, layout, paint);
+	}
+	if (rule.hasOwnProperty('MarkersSymbolizer')) {
+		if (text) {
+			// Since we cannot combine these to in a gl style we need to split it into two styles
+			// Clone the object, remove the text symbolizer and process the copy
+			var markerRule = cloneDataObject(rule);
+			delete markerRule['TextSymbolizer'];
+			processRule(output, markerRule, layername, sourcename);
+		} else {
+			marker = true;
+			processMarkersSymbolizer(rule, style, paint);
+		}
+	}
 	if (rule.hasOwnProperty('LineSymbolizer')) {
-		if (fill) {
+		if (marker) {
+			// Ignore LineSymbolizer for markers (since gl styles do not support circle outlines)
+		} else if (fill) {
 			// Mapnik uses LineSymbolizer for fill outlines as well
 			processFillOutline(rule, style, paint);
+		} else if (text) {
+			// This means that this is a line text, with an line drawn in (debug?)
+			// Let's stip the TextSymbolizer and process the rule again
+			var lineRule = cloneDataObject(rule);
+			delete lineRule['TextSymbolizer'];
+			processRule(output, lineRule, layername, sourcename);
 		} else {
 			processLineSymbolizer(rule, style, paint, zoom);
 		}
-	}
-	if (rule.hasOwnProperty('MarkersSymbolizer')) {
-		processMarkersSymbolizer(rule, style, paint);
-	}
-	if (rule.hasOwnProperty('TextSymbolizer')) {
-		processTextSymbolizer(rule, style, layout, paint);
 	}
 	if (rule.hasOwnProperty('Filter') && rule.Filter.length > 0) {
 		style['filter'] = processFilter(rule.Filter);
@@ -318,6 +342,9 @@ function processTextSymbolizer(rule, layer, layout, paint) {
 	if (params.hasOwnProperty('size')) {
 		layout['text-size'] = processOperand(params['size']);
 	}
+	if (params.hasOwnProperty('placement')) {
+		layout['symbol-placement'] = params['placement'];;
+	}
 	// Currently Mapbox GL does not support using an expression (referncing a field) to specify rotation
 	// if (params.hasOwnProperty('orientation')) {
 	// layout['text-rotate'] = '{' + processOperand(params['orientation']) + '}';
@@ -335,16 +362,29 @@ function processPolygonPatternSymbolizer(rule, style, paint) {
 function processMarkersSymbolizer(rule, style, paint) {
 	// TODO: Support multiple symbolizers for each rule
 	var params = rule.MarkersSymbolizer[0].$;
-	style['type'] = 'symbol';
-	if (params.hasOwnProperty('allow-overlap')) {
-		style['icon-allow-overlap'] = params['allow-overlap'];
-	}
 	if (params.hasOwnProperty('file')) {
 		style['icon-image'] = params['file'];
+		style['type'] = 'symbol';
+		if (params.hasOwnProperty('allow-overlap')) {
+			style['icon-allow-overlap'] = params['allow-overlap'];
+		}
+	} else if (params.hasOwnProperty('width') || params.hasOwnProperty('height')) {
+		style['type'] = 'circle';
+		var width = 0;
+		if (params.hasOwnProperty('width')) {
+			width = parseFloat(params['width']);
+		}
+		var height = 0;
+		if (params.hasOwnProperty('height')) {
+			height = parseFloat(params['height']);
+		}
+		paint['circle-radius'] = Math.max(width, height) / 2;
+		if (params.hasOwnProperty('fill')) {
+			paint['circle-color'] = params['fill'];
+		}
 	} else {
 		throw 'skip';
 	}
-	// TODO Support scaling and rotation
 }
 
 function processPolygonSymbolizer(rule, style, paint) {
@@ -595,4 +635,8 @@ function processTextAlignment(params) {
 
 function isArray(o) {
 	return Object.prototype.toString.call(o) === '[object Array]';
+}
+
+function cloneDataObject(object) {
+	return JSON.parse(JSON.stringify(object));
 }
