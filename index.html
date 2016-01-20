@@ -13,14 +13,41 @@
 </head>
 <body>
 
+<style>
+    #features {
+        position: absolute;
+        top: 0;
+        left: 10px;
+        bottom: 0;
+        width: 300px;
+        overflow: auto;
+        background: rgba(00, 00, 00, 0.8);
+        color: #d0d0d0;
+    }
+</style>
+
 <div id='map'></div>
+<pre id='features'></pre>
 <script>
 mapboxgl.accessToken = 'pk.eyJ1IjoiZXJpa2FuZHJlIiwiYSI6ImNpaWowM3lzaDAwdjZ2am01dmM2M3Z4NTIifQ.d9IfbEaudqyfLXTdxmi1Dg';
-var map = new mapboxgl.Map({
-    container: 'map', // container id
-    style: './style.json', //stylesheet location
-    center: [0, 55], // starting position
-    zoom: 3 // starting zoom
+
+mapboxgl.util.getJSON('./style.json', function (err, style) {
+	if (err) throw err;
+	style.layers.forEach(function (layer) {
+      layer.interactive = true;
+  });
+	var map = new mapboxgl.Map({
+	    container: 'map', // container id
+	    style: style,
+	    center: [0, 55], // starting position
+	    zoom: 3 // starting zoom
+	});
+	map.on('mousemove', function (e) {
+	   map.featuresAt(e.point, {radius: 5}, function (err, features) {
+	       if (err) throw err;
+	       document.getElementById('features').innerHTML = JSON.stringify(features, null, 2);
+	   });
+	});
 });
 </script>
 
