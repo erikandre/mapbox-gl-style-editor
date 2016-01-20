@@ -139,7 +139,9 @@ function mergeRules(rules) {
 				console.log('Merging ' + ruleMap[key].length + ' rules');
 				result.push(group);
 			} else {
-				result.push(group[0]);
+				group.forEach(function(rule) {
+					result.push(rule);
+				});
 			}
 		}
 	}
@@ -343,7 +345,7 @@ function processTextSymbolizer(rule, layer, layout, paint) {
 		layout['text-size'] = processOperand(params['size']);
 	}
 	if (params.hasOwnProperty('placement')) {
-		layout['symbol-placement'] = params['placement'];;
+		layout['symbol-placement'] = params['placement'];
 	}
 	// Currently Mapbox GL does not support using an expression (referncing a field) to specify rotation
 	// if (params.hasOwnProperty('orientation')) {

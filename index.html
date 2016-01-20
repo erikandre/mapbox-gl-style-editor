@@ -39,8 +39,8 @@ mapboxgl.util.getJSON('./style.json', function (err, style) {
 	var map = new mapboxgl.Map({
 	    container: 'map', // container id
 	    style: style,
-	    center: [0, 55], // starting position
-	    zoom: 3 // starting zoom
+	    center: [17.3364,67.6488, 11], // starting position
+	    zoom: 10 // starting zoom
 	});
 	map.on('mousemove', function (e) {
 	   map.featuresAt(e.point, {radius: 5}, function (err, features) {
