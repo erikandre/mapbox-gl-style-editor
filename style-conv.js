@@ -198,6 +198,8 @@ function mergeStyles(styles) {
 					if (maxZoom == null || style.maxzoom < maxZoom) {
 						maxZoom = style.maxzoom;
 					}
+				} else {
+					maxZoom = null;
 				}
 				stops.push(stop);
 			}
@@ -226,9 +228,15 @@ function mergeStyles(styles) {
 		filteredStops.push([ minZoom, 0 ]);
 		result.minzoom = minZoom;
 	}
+	else {
+		delete result.minzoom;
+	}
 	if (maxZoom != null) {
 		filteredStops.push([ maxZoom, 0 ]);
 		result.maxzoom = maxZoom;
+	}
+	else {
+		delete result.maxzoom;
 	}
 	// Sort stops in ascending order
 	filteredStops.sort(function(a, b) {
