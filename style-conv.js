@@ -73,14 +73,11 @@ function convert(xmlFile, tileUrl, callback) {
 function getLayerTypeSortingValue(type) {
 	if (type == 'fill') {
 		return 0;
-	}
-	else if (type == 'line') {
+	} else if (type == 'line') {
 		return 1;
-	}
-	else if (type == 'circle') {
+	} else if (type == 'circle') {
 		return 1;
-	}
-	else if (type == 'symbol') {
+	} else if (type == 'symbol') {
 		return 2;
 	}
 	throw Error('Type not supported: ' + type);
@@ -227,15 +224,13 @@ function mergeStyles(styles) {
 	if (minZoom != null) {
 		filteredStops.push([ minZoom, 0 ]);
 		result.minzoom = minZoom;
-	}
-	else {
+	} else {
 		delete result.minzoom;
 	}
 	if (maxZoom != null) {
 		filteredStops.push([ maxZoom, 0 ]);
 		result.maxzoom = maxZoom;
-	}
-	else {
+	} else {
 		delete result.maxzoom;
 	}
 	// Sort stops in ascending order
@@ -288,7 +283,7 @@ function processRule(output, rule, layername, sourcename) {
 	}
 	if (rule.hasOwnProperty('TextSymbolizer')) {
 		text = true;
-		processTextSymbolizer(rule, style, layout, paint);
+		processTextSymbolizer(rule, style, layout, paint, zoom);
 	}
 	if (rule.hasOwnProperty('MarkersSymbolizer')) {
 		if (text) {
@@ -332,7 +327,7 @@ function processRule(output, rule, layername, sourcename) {
 	output.push(style);
 }
 
-function processTextSymbolizer(rule, layer, layout, paint) {
+function processTextSymbolizer(rule, layer, layout, paint, zoom) {
 	// TODO: Support multiple symbolizers for each rule
 	var params = rule.TextSymbolizer[0].$;
 	layer['type'] = 'symbol';
@@ -349,8 +344,18 @@ function processTextSymbolizer(rule, layer, layout, paint) {
 	if (params.hasOwnProperty('halo-radius')) {
 		paint['text-halo-width'] = processOperand(params['halo-radius']);
 	}
+	if (params.hasOwnProperty('dx')) {
+		layout['text-offset'] = [processOperand(params['dx']), 0];
+	}
 	if (params.hasOwnProperty('size')) {
 		layout['text-size'] = processOperand(params['size']);
+		if (zoom.hasOwnProperty('min')) {
+			paint['text-opacity'] = {
+				'base' : 1,
+				'stops' : [ [ zoom.min - 1, 0 ], [ zoom.min, 1 ] ]
+			};
+			zoom.min--;
+		}
 	}
 	if (params.hasOwnProperty('placement')) {
 		layout['symbol-placement'] = params['placement'];
