@@ -4,5 +4,6 @@ node_modules/
 npm-debug.log
 out/*.pbf
 cache/*.pbf
+cache/*.xml
 out
 style.json
