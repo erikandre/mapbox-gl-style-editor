@@ -1,4 +1,10 @@
 #!/usr/bin/env node
+module.exports = {
+	splitLayers : function(xmlData, outputDir, outputPrefix, callback) {
+		splitLayers2(xmlData, outputDir, outputPrefix, callback);
+	}
+};
+
 var tilelive = require('tilelive');
 var path = require('path');
 var fs = require("fs");
@@ -7,44 +13,48 @@ var xml2js = require('xml2js');
 require('tilelive-bridge').registerProtocols(tilelive);
 var XMLWriter = require('xml-writer');
 
-var args = process.argv;
-args.splice(0, 2); // Remove 'node' and the name of the script
-
-if (args.length < 1) {
-	console.error('Usage: tile-layer-conv.js <Mapnik xml file>');
-	process.exit(1);
+if (require.main == module) {
+	main();
 }
 
-var mapnikFile = path.resolve(__dirname, args[0]);
-var outputPrefix = path.parse(mapnikFile).name;
+function main() {
+	var args = process.argv;
+	args.splice(0, 2); // Remove 'node' and the name of the script
 
-fs.readFile(mapnikFile, 'utf8', function(err, data) {
-	splitLayers(data, function() {
-		process.exit(0);
-	});
-});
+	if (args.length < 1) {
+		console.error('Usage: tile-layer-conv.js <Mapnik xml file>');
+		process.exit(1);
+	}
 
-function splitLayers(mapnikXmlData, callback) {
+	var mapnikFile = path.resolve(__dirname, args[0]);
+	var outputPrefix = path.parse(mapnikFile).name;
+
 	fs.readFile(mapnikFile, 'utf8', function(err, data) {
-		xml2js.parseString(data, function(err, json) {
-			output = [];
-			json.Map.Layer.forEach(function(layer) {
-				var layerName = layer.$.name;
-				var layerXml = createLayerXml(json, layer);
-				output.push({
-					name : layerName,
-					xml : layerXml
-				});
+		splitLayers2(data, 'out/', outputPrefix, function() {
+			process.exit(0);
+		});
+	});
+}
+
+function splitLayers2(mapnikXmlData, outputDir, outputPrefix, callback) {
+	xml2js.parseString(mapnikXmlData, function(err, json) {
+		output = [];
+		json.Map.Layer.forEach(function(layer) {
+			var layerName = layer.$.name;
+			var layerXml = createLayerXml(json, layer);
+			output.push({
+				name : layerName,
+				xml : layerXml
 			});
-			var counter = output.length;
-			output.forEach(function(layer) {
-				var outputFile = path.resolve(__dirname, 'cache/' + outputPrefix + '-' + layer.name + '.xml');
-				fs.writeFile(outputFile, layer.xml, 'utf8', function() {
-					counter--;
-					if (counter == 0) {
-						callback();
-					}
-				});
+		});
+		var counter = output.length;
+		output.forEach(function(layer) {
+			var outputFile = path.resolve(__dirname, outputDir + outputPrefix + '-' + layer.name + '.xml');
+			fs.writeFile(outputFile, layer.xml, 'utf8', function() {
+				counter--;
+				if (counter == 0) {
+					callback();
+				}
 			});
 		});
 	});

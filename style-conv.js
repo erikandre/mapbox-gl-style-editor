@@ -75,7 +75,7 @@ function convert(xmlFile, host, tilePath, callback) {
 			result.Map.Layer.forEach(function(layer) {
 				sources[layer.$.name] = {
 					'type' : 'vector',
-					'tiles' : host + tilePath + '?source=' + layer.$.name + '&z={z}&x={x}&y={y}',
+					'tiles' : [host + tilePath + '?source=' + layer.$.name + '&z={z}&x={x}&y={y}'],
 					'maxzoom' : 14
 				};
 			});

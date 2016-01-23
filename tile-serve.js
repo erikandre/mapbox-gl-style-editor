@@ -6,6 +6,7 @@ var url = require('url');
 var fs = require("fs");
 var qs = require('querystring');
 var styleConv = require('./style-conv');
+var layerSplitter = require('./split-layers');
 require('tilelive-bridge').registerProtocols(tilelive);
 
 var host = 'http://192.168.0.2:8080';
@@ -15,27 +16,22 @@ var args = process.argv;
 args.splice(0, 2); // Remove 'node' and the name of the script
 
 if (args.length < 1) {
-	console.error('Usage: tile-serve [-s <json style file>] <mapnik xlm file>');
+	console.error('Usage: tile-serve <mapnik xlm file>');
 	process.exit(1);
 }
-var styleFile = null;
-if (args[0] == '-s') { // Use an existing style
-	var styleFile = path.resolve(__dirname, args[1]);
-	args.splice(0, 2);
-}
+
 var mapFile = path.resolve(__dirname, args[0]);
+var cacheDir = 'cache/';
 var cachePrefix = path.parse(mapFile).name;
-startServing(mapFile, styleFile);
 
-function startServing(mapFile, styleFile) {
-	tilelive.load("bridge://" + mapFile, function(err, source) {
-		if (err)
-			throw err;
-		serveTilesSource(mapFile, styleFile, source);
+// Create Mapnik setups for each of the layers
+fs.readFile(mapFile, 'utf8', function(err, file) {
+	layerSplitter.splitLayers(file, cacheDir, cachePrefix, function() {
+		startServer();
 	});
-}
+});
 
-function serveTilesSource(mapFile, styleFile, source) {
+function startServer() {
 	console.log('Serving tiles from ' + mapFile + " at port " + port);
 	http.createServer(function(request, response) {
 		// Parse request to get tile coordinates
@@ -46,7 +42,7 @@ function serveTilesSource(mapFile, styleFile, source) {
 			serveMapPage(response);
 		} else if (parsedUrl.pathname == '/style.json') {
 			// Serve the map style
-			serveStyle(response, mapFile, styleFile);
+			serveStyle(response, mapFile);
 		} else if (parsedUrl.pathname == '/favicon.ico') {
 			// Ignored
 			response.writeHead(404);
@@ -54,39 +50,60 @@ function serveTilesSource(mapFile, styleFile, source) {
 		} else if (parsedUrl.pathname == '/font') {
 			serveFont(response, parsedUrl);
 		} else {
-			// Serve a tile
-			var query = parsedUrl.query;
-			var params = qs.parse(query);
-			console.log('Requested z=' + params.z + ', x=' + params.x + ', y=' + params.y);
-			loadFromCache(params.z, params.x, params.y, function(cachedTile) {
-				console.log('Loaded tile from cache');
-				var headers = {
-					'Content-Type' : 'application/x-protobuf',
-					'Content-Encoding' : 'gzip',
-					'x-tilelive-contains-data' : true
-				};
-				response.writeHead(200, 'OK', headers);
-				response.write(cachedTile, 'binary');
-				response.end();
-			}, function() {
-				// Cache miss
-				source.getTile(params.z, params.x, params.y, function(err, tile, headers) {
-					if (err) {
-						response.writeHead(200);
-						response.end();
-						console.error(err);
-						return;
-					}
-					writeToCache(params.z, params.x, params.y, tile, function() {
-						// Return response after saving to cache
-						response.writeHead(200, 'OK', headers);
-						response.write(tile, 'binary');
-						response.end();
-					});
-				});
-			});
+			serveTile(parsedUrl, response);
 		}
 	}).listen(port);
+}
+
+function serveTile(url, response) {
+	var query = url.query;
+	var params = qs.parse(query);
+	console.log('Requested z=' + params.z + ', x=' + params.x + ', y=' + params.y + ' of source=' + params.source);
+	var cacheKey = getCacheKey(params.source, params.z, params.x, params.y);
+	loadFromCache(cacheKey, function(cachedTile) {
+		console.log('Loaded tile from cache');
+		var headers = {
+			'Content-Type' : 'application/x-protobuf',
+			'Content-Encoding' : 'gzip',
+			'x-tilelive-contains-data' : true
+		};
+		response.writeHead(200, 'OK', headers);
+		response.write(cachedTile, 'binary');
+		response.end();
+	}, function() {
+		// Cache miss
+		openTileSource(params.source, function(source) {
+			source.getTile(params.z, params.x, params.y, function(err, tile, headers) {
+				if (err) {
+					response.writeHead(200);
+					response.end();
+					console.error(err);
+					return;
+				}
+				writeToCache(getCacheKey(params.source, params.z, params.x, params.y), tile, function() {
+					// Return response after saving to cache
+					response.writeHead(200, 'OK', headers);
+					response.write(tile, 'binary');
+					response.end();
+				});
+			});
+		});
+	});
+}
+
+function openTileSource(source, callback) {
+	var start = Date.now();
+	var url = 'bridge://' +  path.resolve(__dirname, cacheDir + cachePrefix + '-' + source + '.xml');
+	tilelive.load(url, function(err, source) {
+		if (err)
+			throw err;
+		console.log('Opened source in ' + (Date.now() - start) + 'ms');
+		callback(source);
+	});
+}
+
+function getCacheKey(source, z, x, y) {
+	return cacheDir + cachePrefix + '-' + source + '-' + z + '-' + x + '-' + y + '.pbf';
 }
 
 function serveFont(response, url) {
@@ -103,8 +120,8 @@ function serveFont(response, url) {
 	});
 }
 
-function loadFromCache(z, x, y, hit, miss) {
-	var fileName = path.resolve(__dirname, 'cache/'  + cachePrefix + '-' + z + '-' + x + '-' + y + '.pbf');
+function loadFromCache(key, hit, miss) {
+	var fileName = path.resolve(__dirname, key);
 	fs.readFile(fileName, 'binary', function(err, file) {
 		if (err) {
 			miss();
@@ -114,23 +131,15 @@ function loadFromCache(z, x, y, hit, miss) {
 	});
 }
 
-function writeToCache(z, x, y, tile, callback) {
-	var fileName = path.resolve(__dirname, 'cache/' + cachePrefix + '-' + z + '-' + x + '-' + y + '.pbf');
+function writeToCache(key, tile, callback) {
+	var fileName = path.resolve(__dirname, key);
 	fs.writeFile(fileName, tile, 'binary', callback);
 }
 
-function serveStyle(response, mapFile, styleFile) {
-	if (styleFile == null) {
-		// No precompiled style loaded, need to generate it on the fly
-		styleConv.convertStyle(mapFile, host, '/map?z={z}&x={x}&y={y}', function(jsonStyle) {
-			serveStringResponse(response, jsonStyle);
-		});
-	}
-	else {
-		fs.readFile(styleFile, 'utf8', function(err, style) {
-			serveStringResponse(response, style);
-		});
-	}
+function serveStyle(response, mapFile) {
+	styleConv.convertStyle(mapFile, host, '/map', function(jsonStyle) {
+		serveStringResponse(response, jsonStyle);
+	});
 }
 
 function serveMapPage(response) {
