@@ -62,6 +62,7 @@ function convert(xmlFile, host, tilePath, callback) {
 			// Add background if one is defined
 			if (result.Map.$.hasOwnProperty('background-color')) {
 				var background = {
+					'id': 'background',
 					'type' : 'background',
 					paint : {
 						'background-color' : result.Map.$['background-color']

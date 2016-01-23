@@ -8,8 +8,8 @@ var qs = require('querystring');
 var styleConv = require('./style-conv');
 require('tilelive-bridge').registerProtocols(tilelive);
 
-//var host = 'http://192.168.0.2:8080';
-var host = 'http://localhost:8080';
+var host = 'http://192.168.0.2:8080';
+//var host = 'http://localhost:8080';
 var port = 8080;
 var args = process.argv;
 args.splice(0, 2); // Remove 'node' and the name of the script
