@@ -30,7 +30,6 @@ function main() {
 	var host = args[2];
 	var tilePath = args[3];
 	convert(filename, host, tilePath, function(jsonStyle) {
-		// console.log(jsonStyle);
 		fs.writeFile(outFile, jsonStyle, 'utf8', function() {
 			process.exit(0);
 		});
@@ -44,7 +43,7 @@ function convert(xmlFile, host, tilePath, callback) {
 		xml2js.parseString(data, function(err, result) {
 			if (err)
 				throw err;
-			console.log('Found ' + result.Map.Style.length + ' layers');
+			console.log('Found ' + result.Map.Style.length + ' styles');
 			var output = [];
 			var layers = [];
 			result.Map.Style.forEach(function(layer) {
@@ -62,7 +61,7 @@ function convert(xmlFile, host, tilePath, callback) {
 			// Add background if one is defined
 			if (result.Map.$.hasOwnProperty('background-color')) {
 				var background = {
-					'id': 'background',
+					'id' : 'background',
 					'type' : 'background',
 					paint : {
 						'background-color' : result.Map.$['background-color']
@@ -71,14 +70,17 @@ function convert(xmlFile, host, tilePath, callback) {
 				output.unshift(background);
 			}
 			var glStyle = {};
-			// Vector source
+			// Create one source per (Mapnik) layer
 			var sources = {};
-			var map = {};
+			result.Map.Layer.forEach(function(layer) {
+				sources[layer.$.name] = {
+					'type' : 'vector',
+					'tiles' : host + tilePath + '?source=' + layer.$.name + '&z={z}&x={x}&y={y}',
+					'maxzoom' : 14
+				};
+			});
+
 			glStyle['version'] = 8;
-			map['type'] = 'vector';
-			map['tiles'] = [ host + tilePath ];
-			map['maxzoom'] = 14; // Read from xml Parameters field
-			sources['map'] = map;
 			glStyle['glyphs'] = host + '/font?name={fontstack}&range={range}.pbf';
 			glStyle['sources'] = sources;
 			glStyle['layers'] = output;
@@ -111,7 +113,7 @@ function processLayer(output, layer) {
 	var mergedRules = mergeRules(layer.Rule);
 	mergedRules.forEach(function(rule) {
 		try {
-			processRule(layerRules, rule, layer.$.name, 'map');
+			processRule(layerRules, rule, layer.$.name);
 		} catch (err) {
 			if (err == 'skip') {
 				console.error('Skipped problematic rule: ' + JSON.stringify(rule, null, 3));
@@ -264,11 +266,11 @@ function mergeStyles(styles) {
 	return result;
 }
 
-function processRule(output, rule, layername, sourcename) {
+function processRule(output, rule, layername) {
 	if (isArray(rule)) {
 		var styleGroup = [];
 		rule.forEach(function(subRule) {
-			processRule(styleGroup, subRule, layername, sourcename);
+			processRule(styleGroup, subRule, layername);
 		});
 		output.push(mergeStyles(styleGroup));
 		return;
@@ -280,7 +282,7 @@ function processRule(output, rule, layername, sourcename) {
 	var id = layername + '-';
 	id += ++idCounter;
 	style['id'] = id;
-	style['source'] = sourcename;
+	style['source'] = layername;
 	style['source-layer'] = layername;
 	if (!ruleHasVisualizer(rule)) {
 		throw Error('No or unsupported symbolizer in rule: ' + JSON.stringify(rule, null, 3));
@@ -313,7 +315,7 @@ function processRule(output, rule, layername, sourcename) {
 			// Clone the object, remove the text symbolizer and process the copy
 			var markerRule = cloneDataObject(rule);
 			delete markerRule['TextSymbolizer'];
-			processRule(output, markerRule, layername, sourcename);
+			processRule(output, markerRule, layername);
 		} else {
 			marker = true;
 			processMarkersSymbolizer(rule, style, paint);
@@ -330,7 +332,7 @@ function processRule(output, rule, layername, sourcename) {
 			// Let's stip the TextSymbolizer and process the rule again
 			var lineRule = cloneDataObject(rule);
 			delete lineRule['TextSymbolizer'];
-			processRule(output, lineRule, layername, sourcename);
+			processRule(output, lineRule, layername);
 		} else {
 			processLineSymbolizer(rule, style, paint, zoom);
 		}
@@ -520,7 +522,6 @@ function processFilter(filters) {
 	if (filters.length > 1) {
 		throw Error('Invalid filter, merging failed! ' + filters);
 	}
-	// console.log('Filters: ' + outFilter[0]);
 	return outFilter[0];
 }
 

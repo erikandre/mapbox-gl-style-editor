@@ -14,7 +14,7 @@ args.splice(0, 2); // Remove 'node' and the name of the script
 
 var recursive = false;
 var compress = false;
-var outputPrefix = 'out';
+var outputPrefix = null;
 
 // Check for flags
 while (args.length > 0) {
@@ -41,6 +41,10 @@ var mapFile = path.resolve(__dirname, args[0]);
 var originZ = args[1];
 var originX = args[2];
 var originY = args[3];
+
+if (outputPrefix == null) {
+	outputPrefix =  path.parse(mapFile).name;
+}
 
 var counter = 0;
 var zoomLevels = MAX_ZOOM - originZ;
@@ -104,7 +108,7 @@ function processTile(source, z, x, y, callback) {
 			callback(true);
 			return;
 		}
-		var fileName = outputPrefix + '-' + z + '-' + x + '-' + y + '.pbf';
+		var fileName = 'out/' + outputPrefix + '-' + z + '-' + x + '-' + y + '.pbf';
 		if (compress) {
 			fileName += '.gz';
 		}
