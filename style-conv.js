@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 module.exports = {
-	convertStyle : function(xml, tileUrl, callback) {
-		convert(xml, tileUrl, function(jsonStyle) {
+	convertStyle : function(xml, host, tilePath, callback) {
+		convert(xml, host, tilePath, function(jsonStyle) {
 			callback(jsonStyle);
 		});
 	}
@@ -21,14 +21,15 @@ function main() {
 	var args = process.argv;
 	args.splice(0, 2); // Remove 'node' and the name of the script
 
-	if (args.length < 3) {
-		console.error('Usage: style-conv <mapnik xlm file> <output file> <tile url>');
+	if (args.length < 4) {
+		console.error('Usage: style-conv <mapnik xlm file> <output file> <host name> <tile path>');
 		process.exit(1);
 	}
 	var filename = path.resolve(__dirname, args[0]);
 	var outFile = path.resolve(__dirname, args[1]);
-	var tileUrl = args[2];
-	convert(filename, tileUrl, function(jsonStyle) {
+	var host = args[2];
+	var tilePath = args[3];
+	convert(filename, host, tilePath, function(jsonStyle) {
 		// console.log(jsonStyle);
 		fs.writeFile(outFile, jsonStyle, 'utf8', function() {
 			process.exit(0);
@@ -36,7 +37,7 @@ function main() {
 	});
 }
 
-function convert(xmlFile, tileUrl, callback) {
+function convert(xmlFile, host, tilePath, callback) {
 	fs.readFile(xmlFile, 'utf8', function(err, data) {
 		if (err)
 			throw err;
@@ -45,23 +46,39 @@ function convert(xmlFile, tileUrl, callback) {
 				throw err;
 			console.log('Found ' + result.Map.Style.length + ' layers');
 			var output = [];
+			var layers = [];
 			result.Map.Style.forEach(function(layer) {
+				layers.push(layer.$.name);
 				processLayer(output, layer);
 			});
 			// Sort by layer type
 			output.sort(function(left, right) {
-				return getLayerTypeSortingValue(left.type) - getLayerTypeSortingValue(right.type);
+				var value = getLayerTypeSortingValue(left.type) - getLayerTypeSortingValue(right.type);
+				if (value == 0) {
+					value = getLayerIndex(layers, left) - getLayerIndex(layers, right);
+				}
+				return value;
 			});
+			// Add background if one is defined
+			if (result.Map.$.hasOwnProperty('background-color')) {
+				var background = {
+					'type' : 'background',
+					paint : {
+						'background-color' : result.Map.$['background-color']
+					}
+				};
+				output.unshift(background);
+			}
 			var glStyle = {};
 			// Vector source
 			var sources = {};
 			var map = {};
 			glStyle['version'] = 8;
 			map['type'] = 'vector';
-			map['tiles'] = [ tileUrl ];
+			map['tiles'] = [ host + tilePath ];
 			map['maxzoom'] = 14; // Read from xml Parameters field
 			sources['map'] = map;
-			glStyle['glyphs'] = 'http://localhost:8080/font?name={fontstack}&range={range}.pbf';
+			glStyle['glyphs'] = host + '/font?name={fontstack}&range={range}.pbf';
 			glStyle['sources'] = sources;
 			glStyle['layers'] = output;
 			var json = JSON.stringify(glStyle, null, 3);
@@ -81,6 +98,10 @@ function getLayerTypeSortingValue(type) {
 		return 2;
 	}
 	throw Error('Type not supported: ' + type);
+}
+
+function getLayerIndex(layerList, layer) {
+	return layerList.indexOf(layer['source-layer']);
 }
 
 function processLayer(output, layer) {
@@ -345,7 +366,7 @@ function processTextSymbolizer(rule, layer, layout, paint, zoom) {
 		paint['text-halo-width'] = processOperand(params['halo-radius']);
 	}
 	if (params.hasOwnProperty('dx')) {
-		layout['text-offset'] = [processOperand(params['dx']), 0];
+		layout['text-offset'] = [ processOperand(params['dx']), 0 ];
 	}
 	if (params.hasOwnProperty('size')) {
 		layout['text-size'] = processOperand(params['size']);

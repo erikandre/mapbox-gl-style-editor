@@ -8,6 +8,8 @@ var qs = require('querystring');
 var styleConv = require('./style-conv');
 require('tilelive-bridge').registerProtocols(tilelive);
 
+//var host = 'http://192.168.0.2:8080';
+var host = 'http://localhost:8080';
 var port = 8080;
 var args = process.argv;
 args.splice(0, 2); // Remove 'node' and the name of the script
@@ -70,7 +72,7 @@ function serveTilesSource(mapFile, styleFile, source) {
 				// Cache miss
 				source.getTile(params.z, params.x, params.y, function(err, tile, headers) {
 					if (err) {
-						response.writeHead(404);
+						response.writeHead(200);
 						response.end();
 						console.error(err);
 						return;
@@ -120,7 +122,7 @@ function writeToCache(z, x, y, tile, callback) {
 function serveStyle(response, mapFile, styleFile) {
 	if (styleFile == null) {
 		// No precompiled style loaded, need to generate it on the fly
-		styleConv.convertStyle(mapFile, 'http://localhost:8080/map?z={z}&x={x}&y={y}', function(jsonStyle) {
+		styleConv.convertStyle(mapFile, host, '/map?z={z}&x={x}&y={y}', function(jsonStyle) {
 			serveStringResponse(response, jsonStyle);
 		});
 	}
