@@ -20,6 +20,12 @@ if (args.length < 1) {
 	process.exit(1);
 }
 
+var staticStyle = null;
+if (args[0] == '-s') { // Static style
+	staticStyle = args[1];
+	args.splice(0, 2);
+}
+
 var mapFile = path.resolve(__dirname, args[0]);
 var cacheDir = 'cache/';
 var cachePrefix = path.parse(mapFile).name;
@@ -93,7 +99,7 @@ function serveTile(url, response) {
 
 function openTileSource(source, callback) {
 	var start = Date.now();
-	var url = 'bridge://' +  path.resolve(__dirname, cacheDir + cachePrefix + '-' + source + '.xml');
+	var url = 'bridge://' + path.resolve(__dirname, cacheDir + cachePrefix + '-' + source + '.xml');
 	tilelive.load(url, function(err, source) {
 		if (err)
 			throw err;
@@ -137,9 +143,15 @@ function writeToCache(key, tile, callback) {
 }
 
 function serveStyle(response, mapFile) {
-	styleConv.convertStyle(mapFile, host, '/map', function(jsonStyle) {
-		serveStringResponse(response, jsonStyle);
-	});
+	if (staticStyle != null) {
+		fs.readFile( path.resolve(__dirname, staticStyle), 'utf8', function(err, file) {
+			serveStringResponse(response, file);
+		});
+	} else {
+		styleConv.convertStyle(mapFile, host, '/map', function(jsonStyle) {
+			serveStringResponse(response, jsonStyle);
+		});
+	}
 }
 
 function serveMapPage(response) {
