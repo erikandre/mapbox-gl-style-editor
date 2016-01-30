@@ -26,9 +26,25 @@
         font-size: 60%;
     }
 </style>
+<style type="text/css" media="screen">
+    #editor {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 66%;
+    }
+</style>
 
 <div id='map'></div>
-<pre id='features'></pre>
+<!-- <pre id='features'></pre> -->
+<div id="editor">
+{
+  "key": "value",
+  "otherKey": true
+}
+</div>
+
 <script>
 mapboxgl.accessToken = 'pk.eyJ1IjoiZXJpa2FuZHJlIiwiYSI6ImNpaWowM3lzaDAwdjZ2am01dmM2M3Z4NTIifQ.d9IfbEaudqyfLXTdxmi1Dg';
 
@@ -41,7 +57,7 @@ mapboxgl.util.getJSON('./style.json', function (err, style) {
 	    container: 'map', // container id
 	    style: style,
 	    center: [17.3364,67.6488, 11], // starting position
-	    zoom: 10 // starting zoom
+	    zoom: 12 // starting zoom
 	});
 	map.on('mousemove', function (e) {
 	   map.featuresAt(e.point, {radius: 5}, function (err, features) {
@@ -50,6 +66,13 @@ mapboxgl.util.getJSON('./style.json', function (err, style) {
 	   });
 	});
 });
+</script>
+
+<script src="https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js" type="text/javascript" charset="utf-8"></script>
+<script>
+    var editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.getSession().setMode("ace/mode/json");
 </script>
 
 </body>
