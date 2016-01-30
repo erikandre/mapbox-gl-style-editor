@@ -16,6 +16,7 @@
 
 <style>
     #features {
+        visibility: hidden;
         position: absolute;
         top: 0;
         left: 10px;
@@ -43,13 +44,18 @@
 
     #popup li {
         padding: 10px;
+        padding-left: 15px;
+        padding-right: 15px;
         color: #d0d0d0;
         font: bold 11px arial;
     }
     #popup li:hover {
         padding: 10px;
+        padding-left: 15px;
+        padding-right: 15px;
         background: rgba(00, 00, 00, 0.6);
         color: #d0d0d0;
+        font: bold 11px arial;
     }
 
 </style>
@@ -67,20 +73,20 @@
 <pre id='features'></pre>
 <div id="editor"></div>
 
-<div id="popup">
-<ul >
-  <li>Menu1</li>
-  <li>Menu2</li>
-</ul>
+<div id="popup" >
 </div>
 
 <script>
   mapboxgl.accessToken = 'pk.eyJ1IjoiZXJpa2FuZHJlIiwiYSI6ImNpaWowM3lzaDAwdjZ2am01dmM2M3Z4NTIifQ.d9IfbEaudqyfLXTdxmi1Dg';
-
+  var editor = ace.edit("editor");
+  var popup = document.getElementById('popup');
+  popup.onmouseleave = function() {
+      popup.style.visibility = 'hidden';
+  };
   mapboxgl.util.getJSON('./style.json', function (err, style) {
   	if (err) throw err;
 
-    var editor = ace.edit("editor");
+
     editor.setTheme("ace/theme/monokai");
     editor.getSession().setMode("ace/mode/json");
     editor.setValue(JSON.stringify(style, null, 3));
@@ -94,8 +100,9 @@
   	    center: [17.3364,67.6488, 11], // starting position
   	    zoom: 12 // starting zoom
   	});
+
   	map.on('click', function (e) {
-      var popup = document.getElementById('popup');
+
       popup.style.left = e.point.x + 'px';
       popup.style.top = e.point.y + 'px';
       map.featuresAt(e.point, {radius: 10}, function (err, features) {
@@ -105,7 +112,7 @@
         if (Number(map.getZoom()) > Number(10.0)) {
           var popupHtml = '<ul>';
           features.forEach(function(feature) {
-            popupHtml += '<li>';
+            popupHtml += '<li onclick="openLayer(\'' + feature.layer.id + '\')">';
             popupHtml += feature.layer.id;
             popupHtml += '</li>';
           });
@@ -126,6 +133,12 @@
     });
 
   });
+
+  function openLayer(name) {
+    popup.style.visibility = 'hidden';
+    editor.find(name);
+  }
+
 
 </script>
 
