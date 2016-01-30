@@ -26,6 +26,32 @@
         color: #d0d0d0;
         font-size: 60%;
     }
+    #popup {
+        visibility: hidden;
+        position: absolute;
+        padding: 0px;
+        background: rgba(00, 00, 00, 0.6);
+        color: #d0d0d0;
+    }
+
+    #popup ul {
+        padding: 0px;
+        margin: 0px;
+        list-style-type: none;
+        color: #d0d0d0;
+    }
+
+    #popup li {
+        padding: 10px;
+        color: #d0d0d0;
+        font: bold 11px arial;
+    }
+    #popup li:hover {
+        padding: 10px;
+        background: rgba(00, 00, 00, 0.6);
+        color: #d0d0d0;
+    }
+
 </style>
 <style type="text/css" media="screen">
     #editor {
@@ -38,8 +64,14 @@
 </style>
 
 <div id='map'></div>
-<!-- <pre id='features'></pre> -->
-<div id="editor">
+<pre id='features'></pre>
+<div id="editor"></div>
+
+<div id="popup">
+<ul >
+  <li>Menu1</li>
+  <li>Menu2</li>
+</ul>
 </div>
 
 <script>
@@ -62,12 +94,37 @@
   	    center: [17.3364,67.6488, 11], // starting position
   	    zoom: 12 // starting zoom
   	});
-  	map.on('mousemove', function (e) {
-  	   map.featuresAt(e.point, {radius: 5}, function (err, features) {
-  	       if (err) throw err;
-  	       document.getElementById('features').innerHTML = JSON.stringify(features, null, 2);
-  	   });
+  	map.on('click', function (e) {
+      var popup = document.getElementById('popup');
+      popup.style.left = e.point.x + 'px';
+      popup.style.top = e.point.y + 'px';
+      map.featuresAt(e.point, {radius: 10}, function (err, features) {
+        if (err) throw err;
+        document.getElementById('features').innerHTML = JSON.stringify(features, null, 2);
+        console.log('Pos: ' + JSON.stringify(e.point) + ', zoom=' + map.getZoom());
+        if (Number(map.getZoom()) > Number(10.0)) {
+          var popupHtml = '<ul>';
+          features.forEach(function(feature) {
+            popupHtml += '<li>';
+            popupHtml += feature.layer.id;
+            popupHtml += '</li>';
+          });
+          popupHtml += '</ul>';
+          popup.style.visibility = 'visible';
+          popup.innerHTML = popupHtml;
+        }
+      });
   	});
+
+    editor.commands.addCommand({
+      name: 'Save',
+      bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
+      exec: function(editor) {
+        map.setStyle(JSON.parse(editor.getValue()));
+      },
+      readOnly: false // false if this command should not apply in readOnly mode
+    });
+
   });
 
 </script>

@@ -44,6 +44,7 @@ function startServer() {
 		// Parse request to get tile coordinates
 		console.log('Raw URL: ' + request.url);
 		var parsedUrl = url.parse(request.url);
+		console.log('Path: ' + parsedUrl.pathname);
 		if (parsedUrl.pathname == '/') {
 			// Serve the main html page
 			serveMapPage(response);
@@ -56,12 +57,30 @@ function startServer() {
 			response.end();
 		} else if (parsedUrl.pathname.startsWith('/proxy/')) {
 			serveProxyFile(parsedUrl, response);
+		} else if (parsedUrl.pathname.startsWith('/file/')) {
+			serveLocalFile(parsedUrl, response);
 		} else if (parsedUrl.pathname == '/font') {
 			serveFont(response, parsedUrl);
 		} else {
-			serveTile(parsedUrl, response);
+			//serveTile(parsedUrl, response);
+			//serveLocalFile(parsedUrl, response);
 		}
 	}).listen(port);
+}
+
+function serveLocalFile(url, response) {
+	var relPath = url.pathname.substr(6);
+	console.log('Serving local file: ' + relPath);
+	var file = path.resolve(__dirname, './files/' + relPath);
+	fs.readFile(file, 'binary', function(err, data) {
+		if (err) {
+			response.writeHead(404);
+		} else {
+			response.writeHeader(200);
+			response.write(data, 'binary');
+		}
+		response.end();
+	});
 }
 
 function serveProxyFile(url, response) {
@@ -86,8 +105,13 @@ function serveProxyFile(url, response) {
   	});
   	res.on('end', () => {
     	response.end();
-  	})
+  	});
 	});
+	request.on('error', function(e) {
+		response.writeHead(500);
+		response.end();
+	});
+	request.end();
 }
 
 function serveTile(url, response) {
