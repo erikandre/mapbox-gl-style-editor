@@ -127,6 +127,7 @@
       name: 'Save',
       bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
       exec: function(editor) {
+        saveStyle(editor.getValue());
         map.setStyle(JSON.parse(editor.getValue()));
       },
       readOnly: false // false if this command should not apply in readOnly mode
@@ -139,6 +140,19 @@
     editor.find(name);
   }
 
+  function saveStyle(style) {
+    var request = new XMLHttpRequest();
+    request.onload = function () {
+      if (request.status == 200) {
+        console.log('Saved style');
+      }
+      else {
+        console.log('Failed to save style');
+      }
+    }
+    request.open('POST', 'http://localhost:8080/save', true);
+    request.send(style);
+  }
 
 </script>
 

@@ -41,31 +41,67 @@ fs.readFile(mapFile, 'utf8', function(err, file) {
 function startServer() {
 	console.log('Serving tiles from ' + mapFile + " at port " + port);
 	http.createServer(function(request, response) {
-		// Parse request to get tile coordinates
-		console.log('Raw URL: ' + request.url);
-		var parsedUrl = url.parse(request.url);
-		console.log('Path: ' + parsedUrl.pathname);
-		if (parsedUrl.pathname == '/') {
-			// Serve the main html page
-			serveMapPage(response);
-		} else if (parsedUrl.pathname == '/style.json') {
-			// Serve the map style
-			serveStyle(response, mapFile);
-		} else if (parsedUrl.pathname == '/favicon.ico') {
-			// Ignored
-			response.writeHead(404);
-			response.end();
-		} else if (parsedUrl.pathname.startsWith('/proxy/')) {
-			serveProxyFile(parsedUrl, response);
-		} else if (parsedUrl.pathname.startsWith('/file/')) {
-			serveLocalFile(parsedUrl, response);
-		} else if (parsedUrl.pathname == '/font') {
-			serveFont(response, parsedUrl);
-		} else {
-			//serveTile(parsedUrl, response);
-			//serveLocalFile(parsedUrl, response);
+		if (request.method == 'GET') {
+			handleGet(request, response);
+		}
+		else if (request.method == 'POST') {
+			handlePost(request, response);
 		}
 	}).listen(port);
+}
+
+function handlePost(request, response) {
+	console.log('POST URL: ' + request.url);
+	var parsedUrl = url.parse(request.url);
+	console.log('Path: ' + parsedUrl.pathname);
+	if (parsedUrl.pathname == '/save') {
+		saveStyle(request, response);
+	}
+}
+
+function saveStyle(request, response) {
+	var file;
+	if (staticStyle == null) {
+		file = path.resolve(__dirname, 'output.json');
+	}
+	else {
+ 		file = path.resolve(__dirname, staticStyle);
+	}
+	var out = fs.createWriteStream(file);
+	request.on('data', function(chunk) {
+			out.write(chunk)
+	});
+	request.on('end', function() {
+	  out.end();
+		response.writeHead(200);
+		response.end();
+	});
+}
+
+function handleGet(request, response) {
+	console.log('GET URL: ' + request.url);
+	var parsedUrl = url.parse(request.url);
+	console.log('Path: ' + parsedUrl.pathname);
+	if (parsedUrl.pathname == '/') {
+		// Serve the main html page
+		serveMapPage(response);
+	} else if (parsedUrl.pathname == '/style.json') {
+		// Serve the map style
+		serveStyle(response, mapFile);
+	} else if (parsedUrl.pathname == '/favicon.ico') {
+		// Ignored
+		response.writeHead(404);
+		response.end();
+	} else if (parsedUrl.pathname.startsWith('/proxy/')) {
+		serveProxyFile(parsedUrl, response);
+	} else if (parsedUrl.pathname.startsWith('/file/')) {
+		serveLocalFile(parsedUrl, response);
+	} else if (parsedUrl.pathname == '/font') {
+		serveFont(response, parsedUrl);
+	} else {
+		//serveTile(parsedUrl, response);
+		//serveLocalFile(parsedUrl, response);
+	}
 }
 
 function serveLocalFile(url, response) {
