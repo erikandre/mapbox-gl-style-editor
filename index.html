@@ -83,6 +83,7 @@
   popup.onmouseleave = function() {
       popup.style.visibility = 'hidden';
   };
+  var map = null;
   mapboxgl.util.getJSON('./style.json', function (err, style) {
   	if (err) throw err;
 
@@ -94,45 +95,30 @@
   	style.layers.forEach(function (layer) {
         layer.interactive = true;
     });
-  	var map = new mapboxgl.Map({
+  	map = new mapboxgl.Map({
   	    container: 'map', // container id
   	    style: style,
   	    center: [17.3364,67.6488, 11], // starting position
   	    zoom: 12 // starting zoom
   	});
 
-  	map.on('click', function (e) {
+  	setMapClickListener();
 
-      popup.style.left = e.point.x + 'px';
-      popup.style.top = e.point.y + 'px';
-      map.featuresAt(e.point, {radius: 10}, function (err, features) {
-        if (err) throw err;
-        document.getElementById('features').innerHTML = JSON.stringify(features, null, 2);
-        console.log('Pos: ' + JSON.stringify(e.point) + ', zoom=' + map.getZoom());
-        if (Number(map.getZoom()) > Number(10.0)) {
-          var popupHtml = '<ul>';
-          features.forEach(function(feature) {
-            popupHtml += '<li onclick="openLayer(\'' + feature.layer.id + '\')">';
-            popupHtml += feature.layer.id;
-            popupHtml += '</li>';
-          });
-          popupHtml += '</ul>';
-          popup.style.visibility = 'visible';
-          popup.innerHTML = popupHtml;
-        }
+  });
+
+  editor.commands.addCommand({
+    name: 'Save',
+    bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
+    exec: function(editor) {
+      saveStyle(editor.getValue());
+      var style = JSON.parse(editor.getValue());
+      style.layers.forEach(function (layer) {
+          layer.interactive = true;
       });
-  	});
-
-    editor.commands.addCommand({
-      name: 'Save',
-      bindKey: {win: 'Ctrl-S',  mac: 'Command-S'},
-      exec: function(editor) {
-        saveStyle(editor.getValue());
-        map.setStyle(JSON.parse(editor.getValue()));
-      },
-      readOnly: false // false if this command should not apply in readOnly mode
-    });
-
+      map = map.setStyle(style);
+      setMapClickListener();
+    },
+    readOnly: false // false if this command should not apply in readOnly mode
   });
 
   function openLayer(name) {
@@ -152,6 +138,30 @@
     }
     request.open('POST', 'http://localhost:8080/save', true);
     request.send(style);
+  }
+
+  function setMapClickListener() {
+    map.on('click', function (e) {
+      popup.style.left = (e.point.x - 10) + 'px';
+      popup.style.top = (e.point.y - 10) + 'px';
+      map.featuresAt(e.point, {radius: 10}, function (err, features) {
+        if (err) throw err;
+        console.log('Got features: ' + JSON.stringify(features, null, 2));
+        document.getElementById('features').innerHTML = JSON.stringify(features, null, 2);
+        console.log('Pos: ' + JSON.stringify(e.point) + ', zoom=' + map.getZoom());
+        if (Number(map.getZoom()) > Number(10.0)) {
+          var popupHtml = '<ul>';
+          features.forEach(function(feature) {
+            popupHtml += '<li onclick="openLayer(\'' + feature.layer.id + '\')">';
+            popupHtml += feature.layer.id;
+            popupHtml += '</li>';
+          });
+          popupHtml += '</ul>';
+          popup.style.visibility = 'visible';
+          popup.innerHTML = popupHtml;
+        }
+      });
+  	});
   }
 
 </script>

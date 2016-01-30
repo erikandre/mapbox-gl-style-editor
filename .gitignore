@@ -6,4 +6,4 @@ out/*.pbf
 cache/*.pbf
 cache/*.xml
 out
-style.json
+*.json

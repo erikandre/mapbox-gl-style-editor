@@ -10,36 +10,59 @@ var styleConv = require('./style-conv');
 var layerSplitter = require('./split-layers');
 require('tilelive-bridge').registerProtocols(tilelive);
 
-var host = 'http://192.168.0.2:8080';
-//var host = 'http://localhost:8080';
+//var host = 'http://192.168.0.2:8080';
+var host = 'http://localhost:8080';
 var port = 8080;
 var args = process.argv;
 args.splice(0, 2); // Remove 'node' and the name of the script
 
 if (args.length < 1) {
-	console.error('Usage: tile-serve <mapnik xlm file>');
+	console.error('Usage:');
+	console.error('tile-serve <Mapbox gl json style>');
+	console.error('or');
+	console.error('tile-serve <mapnik xlm file>');
 	process.exit(1);
 }
 
 var staticStyle = null;
-if (args[0] == '-s') { // Static style
-	staticStyle = args[1];
-	args.splice(0, 2);
+var mapFile = null;
+
+if (args[0].endsWith('xml')) {
+	mapFile = path.resolve(__dirname, args[0]);
+}
+else if (args[0].endsWith('json')) {
+	staticStyle = path.resolve(__dirname, args[0]);
 }
 
-var mapFile = path.resolve(__dirname, args[0]);
 var cacheDir = 'cache/';
-var cachePrefix = path.parse(mapFile).name;
+var cachePrefix;
+if (mapFile == null) {
+	cachePrefix = 'disabled'; // No caching if this is not a generated style
+}
+else {
+ cachePrefix = path.parse(mapFile).name;
+}
 
 // Create Mapnik setups for each of the layers
-fs.readFile(mapFile, 'utf8', function(err, file) {
-	layerSplitter.splitLayers(file, cacheDir, cachePrefix, function() {
-		startServer();
+if (mapFile != null) {
+	fs.readFile(mapFile, 'utf8', function(err, file) {
+		layerSplitter.splitLayers(file, cacheDir, cachePrefix, function() {
+			startServer();
+		});
 	});
-});
+
+}
+else {
+	startServer();
+}
 
 function startServer() {
-	console.log('Serving tiles from ' + mapFile + " at port " + port);
+	if (mapFile != null) {
+		console.log('Serving tiles from ' + mapFile + " on port " + port);
+	}
+	else {
+		console.log('Serving style data on port: ' + port);
+	}
 	http.createServer(function(request, response) {
 		if (request.method == 'GET') {
 			handleGet(request, response);
@@ -63,9 +86,10 @@ function saveStyle(request, response) {
 	var file;
 	if (staticStyle == null) {
 		file = path.resolve(__dirname, 'output.json');
+		staticStyle = file; // To avoid overwriting saved changes
 	}
 	else {
- 		file = path.resolve(__dirname, staticStyle);
+ 		file = staticStyle;
 	}
 	var out = fs.createWriteStream(file);
 	request.on('data', function(chunk) {
@@ -99,8 +123,7 @@ function handleGet(request, response) {
 	} else if (parsedUrl.pathname == '/font') {
 		serveFont(response, parsedUrl);
 	} else {
-		//serveTile(parsedUrl, response);
-		//serveLocalFile(parsedUrl, response);
+		serveTile(parsedUrl, response);
 	}
 }
 
