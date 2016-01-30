@@ -2,6 +2,7 @@
 var tilelive = require('tilelive');
 var path = require('path');
 var http = require("http");
+var https = require('https');
 var url = require('url');
 var fs = require("fs");
 var qs = require('querystring');
@@ -53,12 +54,40 @@ function startServer() {
 			// Ignored
 			response.writeHead(404);
 			response.end();
+		} else if (parsedUrl.pathname.startsWith('/proxy/')) {
+			serveProxyFile(parsedUrl, response);
 		} else if (parsedUrl.pathname == '/font') {
 			serveFont(response, parsedUrl);
 		} else {
 			serveTile(parsedUrl, response);
 		}
 	}).listen(port);
+}
+
+function serveProxyFile(url, response) {
+	// TODO: Don't use hard coded url
+	var proxyUrl = 'http://d2zne8rmvh5alv.cloudfront.net/' + url.pathname.substr(7);
+	console.log('Serving proxy file: ' + proxyUrl);
+
+	var request = http.request(proxyUrl, function(res) {
+		if (res.statusCode != 200) {
+			response.writeHead(res.statusCode);
+			response.end();
+			return;
+		}
+		var headers = {
+			'Content-Type' : 'application/x-protobuf',
+			'Content-Encoding' : 'gzip',
+			'x-tilelive-contains-data' : true
+		};
+		response.writeHead(200, 'OK', headers);
+		res.on('data', function(chunk) {
+			response.write(chunk, 'binary');
+  	});
+  	res.on('end', () => {
+    	response.end();
+  	})
+	});
 }
 
 function serveTile(url, response) {
