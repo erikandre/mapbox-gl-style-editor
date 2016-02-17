@@ -21,22 +21,21 @@ function main() {
 	var args = process.argv;
 	args.splice(0, 2); // Remove 'node' and the name of the script
 
-	if (args.length < 4) {
-		console.error('Usage: style-conv <mapnik xlm file> <output file> <host name> <tile path>');
+	if (args.length < 3) {
+		console.error('Usage: style-conv <mapnik xlm file> <output file> <host name>');
 		process.exit(1);
 	}
 	var filename = path.resolve(__dirname, args[0]);
 	var outFile = path.resolve(__dirname, args[1]);
 	var host = args[2];
-	var tilePath = args[3];
-	convert(filename, host, tilePath, function(jsonStyle) {
+	convert(filename, host, function(jsonStyle) {
 		fs.writeFile(outFile, jsonStyle, 'utf8', function() {
 			process.exit(0);
 		});
 	});
 }
 
-function convert(xmlFile, host, tilePath, callback) {
+function convert(xmlFile, host, callback) {
 	fs.readFile(xmlFile, 'utf8', function(err, data) {
 		if (err)
 			throw err;
@@ -75,13 +74,13 @@ function convert(xmlFile, host, tilePath, callback) {
 			result.Map.Layer.forEach(function(layer) {
 				sources[layer.$.name] = {
 					'type' : 'vector',
-					'tiles' : [host + tilePath + '?source=' + layer.$.name + '&z={z}&x={x}&y={y}'],
+					'tiles' : [host + '/' + layer.$.name + '/{z}/{x}/{y}'],
 					'maxzoom' : 14
 				};
 			});
 
 			glStyle['version'] = 8;
-			glStyle['glyphs'] = host + '/font?name={fontstack}&range={range}.pbf';
+			glStyle['glyphs'] = host + '/font/{fontstack}/{range}.pbf';
 			glStyle['sources'] = sources;
 			glStyle['layers'] = output;
 			var json = JSON.stringify(glStyle, null, 3);
@@ -352,12 +351,11 @@ function processRule(output, rule, layername) {
 }
 
 function processTextSymbolizer(rule, layer, layout, paint, zoom) {
-	// TODO: Support multiple symbolizers for each rule
 	var params = rule.TextSymbolizer[0].$;
 	layer['type'] = 'symbol';
 	layout['text-field'] = '{' + processOperand(rule.TextSymbolizer[0]._) + '}';
 	if (params.hasOwnProperty('face-name')) {
-		// layout['text-font'] = [ params['face-name'] ];
+		// layout['text-font'] = [ params['face-name'] ]; //TODO Support specifying font
 	}
 	if (params.hasOwnProperty('fill')) { // Text color
 		paint['text-color'] = params['fill'];
@@ -392,14 +390,12 @@ function processTextSymbolizer(rule, layer, layout, paint, zoom) {
 }
 
 function processPolygonPatternSymbolizer(rule, style, paint) {
-	// TODO: Support multiple symbolizers for each rule
 	var params = rule.PolygonPatternSymbolizer[0].$;
 	style['type'] = 'fill';
 	paint['fill-pattern'] = params.file;
 }
 
 function processMarkersSymbolizer(rule, style, paint) {
-	// TODO: Support multiple symbolizers for each rule
 	var params = rule.MarkersSymbolizer[0].$;
 	if (params.hasOwnProperty('file')) {
 		style['icon-image'] = params['file'];
@@ -427,7 +423,6 @@ function processMarkersSymbolizer(rule, style, paint) {
 }
 
 function processPolygonSymbolizer(rule, style, paint) {
-	// TODO: Support multiple symbolizers for each rule
 	var params = rule.PolygonSymbolizer[0].$;
 	style['type'] = 'fill';
 	if (params.hasOwnProperty('fill')) {
@@ -439,7 +434,6 @@ function processPolygonSymbolizer(rule, style, paint) {
 }
 
 function processFillOutline(rule, style, paint) {
-	// TODO: Support multiple symbolizers for each rule
 	var params = rule.LineSymbolizer[0].$;
 	if (params.hasOwnProperty('stroke-width')) {
 		if (parseFloat(params['stroke-width'], 10) == 0) {
@@ -452,7 +446,6 @@ function processFillOutline(rule, style, paint) {
 }
 
 function processLineSymbolizer(rule, style, paint, zoom) {
-	// TODO: Support multiple symbolizers for each rule
 	var params = rule.LineSymbolizer[0].$;
 	style['type'] = 'line';
 	if (params.hasOwnProperty('stroke')) {
