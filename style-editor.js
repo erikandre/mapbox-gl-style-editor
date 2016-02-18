@@ -29,8 +29,7 @@ var mapFile = null;
 
 if (args[0].endsWith('xml')) {
 	mapFile = path.resolve(__dirname, args[0]);
-}
-else if (args[0].endsWith('json')) {
+} else if (args[0].endsWith('json')) {
 	staticStyle = path.resolve(__dirname, args[0]);
 }
 
@@ -38,9 +37,8 @@ var cacheDir = 'cache/';
 var cachePrefix;
 if (mapFile == null) {
 	cachePrefix = 'disabled'; // No caching if this is not a generated style
-}
-else {
- cachePrefix = path.parse(mapFile).name;
+} else {
+	cachePrefix = path.parse(mapFile).name;
 }
 
 // Create Mapnik setups for each of the layers
@@ -51,23 +49,20 @@ if (mapFile != null) {
 		});
 	});
 
-}
-else {
+} else {
 	startServer();
 }
 
 function startServer() {
 	if (mapFile != null) {
 		console.log('Serving tiles from ' + mapFile + " on port " + port);
-	}
-	else {
+	} else {
 		console.log('Serving style data on port: ' + port);
 	}
 	http.createServer(function(request, response) {
 		if (request.method == 'GET') {
 			handleGet(request, response);
-		}
-		else if (request.method == 'POST') {
+		} else if (request.method == 'POST') {
 			handlePost(request, response);
 		}
 	}).listen(port);
@@ -87,16 +82,15 @@ function saveStyle(request, response) {
 	if (staticStyle == null) {
 		file = path.resolve(__dirname, 'output.json');
 		staticStyle = file; // To avoid overwriting saved changes
-	}
-	else {
- 		file = staticStyle;
+	} else {
+		file = staticStyle;
 	}
 	var out = fs.createWriteStream(file);
 	request.on('data', function(chunk) {
-			out.write(chunk)
+		out.write(chunk)
 	});
 	request.on('end', function() {
-	  out.end();
+		out.end();
 		response.writeHead(200);
 		response.end();
 	});
@@ -161,10 +155,10 @@ function serveProxyFile(url, response) {
 		response.writeHead(200, 'OK', headers);
 		res.on('data', function(chunk) {
 			response.write(chunk, 'binary');
-  	});
-  	res.on('end', () => {
-    	response.end();
-  	});
+		});
+		res.on('end', function() {
+			response.end();
+		});
 	});
 	request.on('error', function(e) {
 		response.writeHead(500);
@@ -256,7 +250,7 @@ function writeToCache(key, tile, callback) {
 
 function serveStyle(response, mapFile) {
 	if (staticStyle != null) {
-		fs.readFile( path.resolve(__dirname, staticStyle), 'utf8', function(err, file) {
+		fs.readFile(path.resolve(__dirname, staticStyle), 'utf8', function(err, file) {
 			serveStringResponse(response, file);
 		});
 	} else {
