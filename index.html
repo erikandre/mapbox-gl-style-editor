@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<title>Style Editor</title>
     <meta charset='utf-8' />
     <title></title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
@@ -18,7 +19,7 @@
     #features {
         visibility: hidden;
         position: absolute;
-        top: 0;
+        top: 45px;
         left: 10px;
         bottom: 0;
         width: 300px;
@@ -26,6 +27,19 @@
         background: rgba(00, 00, 00, 0.8);
         color: #d0d0d0;
         font-size: 60%;
+    }
+    #featuresToggle {
+        visibility: visible;
+        position: absolute;
+        top: 0px;
+        left: 10px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        padding-left: 15px;
+        padding-right: 15px;
+        background: rgba(00, 00, 00, 0.8);
+        color: #d0d0d0;
+        font-size: 140%;
     }
     #popup {
         visibility: hidden;
@@ -71,6 +85,7 @@
 
 <div id='map'></div>
 <pre id='features'></pre>
+<pre id='featuresToggle'>D</pre>
 <div id="editor"></div>
 
 <div id="popup" >
@@ -82,6 +97,16 @@
   var popup = document.getElementById('popup');
   popup.onmouseleave = function() {
       popup.style.visibility = 'hidden';
+  };
+  var features = document.getElementById('features');
+  var toggle = document.getElementById('featuresToggle');
+  toggle.onclick = function() {
+  	if (features.style.visibility == 'hidden') {
+  		features.style.visibility = 'visible';
+  	}
+  	else {
+		features.style.visibility = 'hidden';
+  	}
   };
   var map = null;
   mapboxgl.util.getJSON('./style.json', function (err, style) {
