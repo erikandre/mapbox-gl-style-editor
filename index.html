@@ -41,6 +41,19 @@
         color: #d0d0d0;
         font-size: 140%;
     }
+	#editorToggle {
+        visibility: visible;
+        position: absolute;
+        top: 0px;
+        left: 60px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        padding-left: 15px;
+        padding-right: 15px;
+        background: rgba(00, 00, 00, 0.8);
+        color: #d0d0d0;
+        font-size: 140%;
+    } 
     #popup {
         visibility: hidden;
         position: absolute;
@@ -86,27 +99,43 @@
 <div id='map'></div>
 <pre id='features'></pre>
 <pre id='featuresToggle'>D</pre>
+<pre id='editorToggle'>E</pre>
 <div id="editor"></div>
 
 <div id="popup" >
 </div>
 
 <script>
+
+  var editorMaximized = false;
+
   mapboxgl.accessToken = 'pk.eyJ1IjoiZXJpa2FuZHJlIiwiYSI6ImNpaWowM3lzaDAwdjZ2am01dmM2M3Z4NTIifQ.d9IfbEaudqyfLXTdxmi1Dg';
   var editor = ace.edit("editor");
   var popup = document.getElementById('popup');
   popup.onmouseleave = function() {
       popup.style.visibility = 'hidden';
   };
+  var editorFrame = document.getElementById('editor');
   var features = document.getElementById('features');
-  var toggle = document.getElementById('featuresToggle');
-  toggle.onclick = function() {
+  var debugToggle = document.getElementById('featuresToggle');
+  debugToggle.onclick = function() {
   	if (features.style.visibility == 'hidden') {
   		features.style.visibility = 'visible';
   	}
   	else {
 		features.style.visibility = 'hidden';
   	}
+  };
+  var editorToggle = document.getElementById('editorToggle');
+  editorToggle.onclick = function() {
+	  if (editorMaximized) {
+	  	editorFrame.style.left = '66%';
+	  	editorMaximized = false;
+	  }
+	  else {
+	  	editorFrame.style.left = '33%';
+	  	editorMaximized = true;
+	  }
   };
   var map = null;
   mapboxgl.util.getJSON('./style.json', function (err, style) {
