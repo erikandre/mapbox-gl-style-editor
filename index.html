@@ -124,6 +124,7 @@
   	}
   	else {
 		features.style.visibility = 'hidden';
+		features.innerHTML = '';
   	}
   };
   var editorToggle = document.getElementById('editorToggle');
@@ -201,7 +202,12 @@
       map.featuresAt(e.point, {radius: 10}, function (err, features) {
         if (err) throw err;
         console.log('Got features: ' + JSON.stringify(features, null, 2));
-        document.getElementById('features').innerHTML = JSON.stringify(features, null, 2);
+        if (document.getElementById('features').style.visibility == 'visible') {
+        	document.getElementById('features').innerHTML = JSON.stringify(features, null, 2);
+        }
+        else {
+      	  document.getElementById('features').innerHTML = '';
+        }
         console.log('Pos: ' + JSON.stringify(e.point) + ', zoom=' + map.getZoom());
         if (Number(map.getZoom()) > Number(10.0)) {
           var popupHtml = '<ul>';
