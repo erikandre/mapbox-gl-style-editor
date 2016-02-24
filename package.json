@@ -1,0 +1,11 @@
+{
+  "name": "style-editor",
+  "version": "0.1.0",
+  "description": "Editor for Mapbox Gl json styles",
+  "dependencies": {
+    "tilelive": "^5.12.1",
+    "tilelive-bridge": "^2.2.3",
+    "xml-writer": "^1.6.0",
+    "xml2js": "^0.4.16"
+  }
+}
