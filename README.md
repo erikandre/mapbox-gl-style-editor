@@ -7,7 +7,7 @@ A simple editor for Mapbox gl styles. Allows you to open an style file and edit 
 Edit a Mapbox gl json style. All tile data references by the style must already have been converted to vector tiles.
 This can be done using [mapbox-tile-copy](https://github.com/mapbox/mapbox-tile-copy).
 ```
-./tile-serve.js <json style file>
+./style-editor.js <json style file>
 ```
 
 # style-conv
