@@ -6,3 +6,4 @@ out/*.pbf
 cache/*.pbf
 cache/*.xml
 out
+./files/
