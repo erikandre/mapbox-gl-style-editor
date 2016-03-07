@@ -22,6 +22,16 @@ An experimental tool for converting Mapnik XML styles to [Mapbox GL Styles](http
 
 Where the tile URL is a local or remote URL specifying the location of the vector tiles data (e.g http://localhost:8080/map?z={z}&x={x}&y={y})
 
+# spritemap-scaler
+
+A tool for scaling coordinates of a Mapbox sprite map .json file (does not scale the image itself).
+
+## Usage
+
+```
+./spritemap-scaler.js <spritemap json file> <scale factor>
+```
+
 # Dependencies
 
 * [Tilelive](https://github.com/mapbox/tilelive)
