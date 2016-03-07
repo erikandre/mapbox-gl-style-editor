@@ -1,5 +1,7 @@
 # style-editor
 
+![Screenshot](files/screenshot.png "Screenshot of style-editor")
+
 A simple editor for Mapbox gl styles. Allows you to open an style file and edit the raw json data and see how the changes affects the map. Useful if you have exported a style from Mapbox Studio and want to edit it.
 
 ## Usage
