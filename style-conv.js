@@ -317,7 +317,7 @@ function processRule(output, rule, layername) {
 			processRule(output, markerRule, layername);
 		} else {
 			marker = true;
-			processMarkersSymbolizer(rule, style, paint);
+			processMarkersSymbolizer(rule, style, layout, paint);
 		}
 	}
 	if (rule.hasOwnProperty('LineSymbolizer')) {
@@ -395,13 +395,13 @@ function processPolygonPatternSymbolizer(rule, style, paint) {
 	paint['fill-pattern'] = params.file;
 }
 
-function processMarkersSymbolizer(rule, style, paint) {
+function processMarkersSymbolizer(rule, style, layout, paint) {
 	var params = rule.MarkersSymbolizer[0].$;
 	if (params.hasOwnProperty('file')) {
-		style['icon-image'] = params['file'];
+		layout['icon-image'] = params['file'];
 		style['type'] = 'symbol';
 		if (params.hasOwnProperty('allow-overlap')) {
-			style['icon-allow-overlap'] = params['allow-overlap'];
+			layout['icon-allow-overlap'] = params['allow-overlap'] == "true";
 		}
 	} else if (params.hasOwnProperty('width') || params.hasOwnProperty('height')) {
 		style['type'] = 'circle';
