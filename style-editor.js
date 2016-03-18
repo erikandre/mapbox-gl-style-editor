@@ -224,7 +224,10 @@ function serveFont(response, url) {
 	var fileName = path.resolve(__dirname, 'font/' + params.name.split(',')[0] + '/' + params.range);
 	fs.readFile(fileName, 'binary', function(err, file) {
 		if (err) {
-			throw err;
+			//throw err;
+			response.writeHead(404);
+			response.end();
+			return;
 		}
 		response.writeHead(200);
 		response.write(file, 'binary');
