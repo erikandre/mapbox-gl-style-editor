@@ -161,6 +161,7 @@ function serveProxyFile(url, response) {
 		});
 	});
 	request.on('error', function(e) {
+		console.log('Failed to load proxied file: ' + url + ', e: ' + e);
 		response.writeHead(500);
 		response.end();
 	});

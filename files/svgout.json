@@ -1,0 +1,499 @@
+{
+   "vad": {
+      "width": 124,
+      "height": 102,
+      "x": 0,
+      "y": 0,
+      "pixelRatio": 1
+   },
+   "vagbom": {
+      "width": 106,
+      "height": 102,
+      "x": 124,
+      "y": 0,
+      "pixelRatio": 1
+   },
+   "milstolpe": {
+      "width": 106,
+      "height": 102,
+      "x": 0,
+      "y": 102,
+      "pixelRatio": 1
+   },
+   "kyrka-liten": {
+      "width": 102,
+      "height": 102,
+      "x": 106,
+      "y": 102,
+      "pixelRatio": 1
+   },
+   "begravningsplats": {
+      "width": 102,
+      "height": 102,
+      "x": 231,
+      "y": 0,
+      "pixelRatio": 1
+   },
+   "vindskydd4": {
+      "width": 102,
+      "height": 102,
+      "x": 231,
+      "y": 102,
+      "pixelRatio": 1
+   },
+   "camping": {
+      "width": 102,
+      "height": 102,
+      "x": 0,
+      "y": 204,
+      "pixelRatio": 1
+   },
+   "bro": {
+      "width": 102,
+      "height": 102,
+      "x": 102,
+      "y": 204,
+      "pixelRatio": 1
+   },
+   "brygganordning": {
+      "width": 102,
+      "height": 102,
+      "x": 204,
+      "y": 204,
+      "pixelRatio": 1
+   },
+   "motionsslinga": {
+      "width": 102,
+      "height": 102,
+      "x": 333,
+      "y": 0,
+      "pixelRatio": 1
+   },
+   "fjallstation": {
+      "width": 102,
+      "height": 102,
+      "x": 333,
+      "y": 102,
+      "pixelRatio": 1
+   },
+   "cistern": {
+      "width": 102,
+      "height": 102,
+      "x": 333,
+      "y": 204,
+      "pixelRatio": 1
+   },
+   "cykelled": {
+      "width": 102,
+      "height": 102,
+      "x": 0,
+      "y": 307,
+      "pixelRatio": 1
+   },
+   "dammbyggnad": {
+      "width": 102,
+      "height": 102,
+      "x": 102,
+      "y": 307,
+      "pixelRatio": 1
+   },
+   "rastplats": {
+      "width": 102,
+      "height": 102,
+      "x": 204,
+      "y": 307,
+      "pixelRatio": 1
+   },
+   "fornlamning2": {
+      "width": 102,
+      "height": 102,
+      "x": 307,
+      "y": 307,
+      "pixelRatio": 1
+   },
+   "flygplats-militar": {
+      "width": 102,
+      "height": 102,
+      "x": 436,
+      "y": 0,
+      "pixelRatio": 1
+   },
+   "flygplats-ovrig": {
+      "width": 102,
+      "height": 102,
+      "x": 436,
+      "y": 102,
+      "pixelRatio": 1
+   },
+   "flygplats-trafik": {
+      "width": 102,
+      "height": 102,
+      "x": 436,
+      "y": 204,
+      "pixelRatio": 1
+   },
+   "fornlamning": {
+      "width": 102,
+      "height": 102,
+      "x": 436,
+      "y": 307,
+      "pixelRatio": 1
+   },
+   "sevardhet": {
+      "width": 102,
+      "height": 102,
+      "x": 0,
+      "y": 409,
+      "pixelRatio": 1
+   },
+   "helikopterlandning": {
+      "width": 102,
+      "height": 102,
+      "x": 102,
+      "y": 409,
+      "pixelRatio": 1
+   },
+   "fyr": {
+      "width": 102,
+      "height": 102,
+      "x": 204,
+      "y": 409,
+      "pixelRatio": 1
+   },
+   "gasthamn": {
+      "width": 102,
+      "height": 102,
+      "x": 307,
+      "y": 409,
+      "pixelRatio": 1
+   },
+   "vindskydd3": {
+      "width": 102,
+      "height": 102,
+      "x": 409,
+      "y": 409,
+      "pixelRatio": 1
+   },
+   "golfbana": {
+      "width": 102,
+      "height": 102,
+      "x": 538,
+      "y": 0,
+      "pixelRatio": 1
+   },
+   "gruvhal": {
+      "width": 102,
+      "height": 102,
+      "x": 538,
+      "y": 102,
+      "pixelRatio": 1
+   },
+   "skoterled": {
+      "width": 102,
+      "height": 102,
+      "x": 538,
+      "y": 204,
+      "pixelRatio": 1
+   },
+   "husvagnscamping": {
+      "width": 102,
+      "height": 102,
+      "x": 538,
+      "y": 307,
+      "pixelRatio": 1
+   },
+   "hjalptelefon-neg": {
+      "width": 102,
+      "height": 102,
+      "x": 538,
+      "y": 409,
+      "pixelRatio": 1
+   },
+   "hus-slott": {
+      "width": 102,
+      "height": 102,
+      "x": 0,
+      "y": 512,
+      "pixelRatio": 1
+   },
+   "hus1": {
+      "width": 102,
+      "height": 102,
+      "x": 102,
+      "y": 512,
+      "pixelRatio": 1
+   },
+   "hus1_turist": {
+      "width": 102,
+      "height": 102,
+      "x": 204,
+      "y": 512,
+      "pixelRatio": 1
+   },
+   "hus2": {
+      "width": 102,
+      "height": 102,
+      "x": 307,
+      "y": 512,
+      "pixelRatio": 1
+   },
+   "hus3": {
+      "width": 102,
+      "height": 102,
+      "x": 409,
+      "y": 512,
+      "pixelRatio": 1
+   },
+   "badstalle": {
+      "width": 102,
+      "height": 102,
+      "x": 512,
+      "y": 512,
+      "pixelRatio": 1
+   },
+   "kulturminne": {
+      "width": 102,
+      "height": 102,
+      "x": 640,
+      "y": 0,
+      "pixelRatio": 1
+   },
+   "kata": {
+      "width": 102,
+      "height": 102,
+      "x": 640,
+      "y": 102,
+      "pixelRatio": 1
+   },
+   "jarnvagsstation": {
+      "width": 102,
+      "height": 102,
+      "x": 640,
+      "y": 204,
+      "pixelRatio": 1
+   },
+   "idrott-skjutbana": {
+      "width": 102,
+      "height": 102,
+      "x": 640,
+      "y": 307,
+      "pixelRatio": 1
+   },
+   "information": {
+      "width": 102,
+      "height": 102,
+      "x": 640,
+      "y": 409,
+      "pixelRatio": 1
+   },
+   "idrottsanlaggning": {
+      "width": 102,
+      "height": 102,
+      "x": 640,
+      "y": 512,
+      "pixelRatio": 1
+   },
+   "idrottsanlaggning2": {
+      "width": 102,
+      "height": 102,
+      "x": 0,
+      "y": 614,
+      "pixelRatio": 1
+   },
+   "triangelpunkt": {
+      "width": 102,
+      "height": 102,
+      "x": 102,
+      "y": 614,
+      "pixelRatio": 1
+   },
+   "ruin": {
+      "width": 102,
+      "height": 102,
+      "x": 204,
+      "y": 614,
+      "pixelRatio": 1
+   },
+   "naturminne-geologiskt": {
+      "width": 102,
+      "height": 102,
+      "x": 307,
+      "y": 614,
+      "pixelRatio": 1
+   },
+   "mast": {
+      "width": 102,
+      "height": 102,
+      "x": 409,
+      "y": 614,
+      "pixelRatio": 1
+   },
+   "minnessten": {
+      "width": 102,
+      "height": 102,
+      "x": 512,
+      "y": 614,
+      "pixelRatio": 1
+   },
+   "utskitsplats": {
+      "width": 102,
+      "height": 102,
+      "x": 614,
+      "y": 614,
+      "pixelRatio": 1
+   },
+   "skorsten": {
+      "width": 102,
+      "height": 102,
+      "x": 743,
+      "y": 0,
+      "pixelRatio": 1
+   },
+   "skidspar": {
+      "width": 102,
+      "height": 102,
+      "x": 743,
+      "y": 102,
+      "pixelRatio": 1
+   },
+   "vindskydd2": {
+      "width": 102,
+      "height": 102,
+      "x": 743,
+      "y": 204,
+      "pixelRatio": 1
+   },
+   "sjukhus": {
+      "width": 102,
+      "height": 102,
+      "x": 743,
+      "y": 307,
+      "pixelRatio": 1
+   },
+   "kyrka": {
+      "width": 102,
+      "height": 102,
+      "x": 743,
+      "y": 409,
+      "pixelRatio": 1
+   },
+   "stugby": {
+      "width": 102,
+      "height": 102,
+      "x": 743,
+      "y": 512,
+      "pixelRatio": 1
+   },
+   "skoterpabud": {
+      "width": 102,
+      "height": 102,
+      "x": 743,
+      "y": 614,
+      "pixelRatio": 1
+   },
+   "slussport": {
+      "width": 102,
+      "height": 102,
+      "x": 0,
+      "y": 716,
+      "pixelRatio": 1
+   },
+   "vandrarhem": {
+      "width": 102,
+      "height": 102,
+      "x": 102,
+      "y": 716,
+      "pixelRatio": 1
+   },
+   "transformator": {
+      "width": 102,
+      "height": 102,
+      "x": 204,
+      "y": 716,
+      "pixelRatio": 1
+   },
+   "torn": {
+      "width": 102,
+      "height": 102,
+      "x": 307,
+      "y": 716,
+      "pixelRatio": 1
+   },
+   "telefon": {
+      "width": 102,
+      "height": 102,
+      "x": 409,
+      "y": 716,
+      "pixelRatio": 1
+   },
+   "tunnel": {
+      "width": 102,
+      "height": 102,
+      "x": 512,
+      "y": 716,
+      "pixelRatio": 1
+   },
+   "bilparkering": {
+      "width": 102,
+      "height": 102,
+      "x": 614,
+      "y": 716,
+      "pixelRatio": 1
+   },
+   "vaderkvarn": {
+      "width": 102,
+      "height": 102,
+      "x": 716,
+      "y": 716,
+      "pixelRatio": 1
+   },
+   "vandplats": {
+      "width": 102,
+      "height": 102,
+      "x": 845,
+      "y": 0,
+      "pixelRatio": 1
+   },
+   "vattenpilriktning": {
+      "width": 102,
+      "height": 102,
+      "x": 845,
+      "y": 102,
+      "pixelRatio": 1
+   },
+   "vindkraft": {
+      "width": 102,
+      "height": 102,
+      "x": 845,
+      "y": 204,
+      "pixelRatio": 1
+   },
+   "vindskydd1": {
+      "width": 102,
+      "height": 102,
+      "x": 845,
+      "y": 307,
+      "pixelRatio": 1
+   },
+   "svarterrang": {
+      "width": 35,
+      "height": 25,
+      "x": 845,
+      "y": 409,
+      "pixelRatio": 1
+   },
+   "sankmark": {
+      "width": 35,
+      "height": 23,
+      "x": 880,
+      "y": 409,
+      "pixelRatio": 1
+   },
+   "glaciar": {
+      "width": 12,
+      "height": 12,
+      "x": 915,
+      "y": 409,
+      "pixelRatio": 1
+   }
+}
