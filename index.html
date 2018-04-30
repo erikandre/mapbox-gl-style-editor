@@ -5,9 +5,9 @@
     <meta charset='utf-8' />
     <title></title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.15.0/mapbox-gl.js'></script>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.43.0/mapbox-gl.js'></script>
     <script src="https://cdn.jsdelivr.net/ace/1.2.3/min/ace.js" type="text/javascript" charset="utf-8"></script>
-    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.15.0/mapbox-gl.css' rel='stylesheet' />
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.43.0/mapbox-gl.css' rel='stylesheet' />
     <style>
         body { margin:0; padding:0; }
         #map { position:absolute; top:0; bottom:0; width:100%; }
@@ -54,7 +54,7 @@
         background: rgba(00, 00, 00, 0.8);
         color: #d0d0d0;
         font-size: 140%;
-    } 
+    }
     #popup {
         visibility: hidden;
         position: absolute;
@@ -140,27 +140,29 @@
 	  }
   };
   var map = null;
-  mapboxgl.util.getJSON('./style.json', function (err, style) {
-  	if (err) throw err;
+	fetch('./style.json')
+		.then(function(response) {
+			return response.json();
+		})
+	 	.then(function(style) {
+		 	editor.setTheme("ace/theme/monokai");
+		 	editor.getSession().setMode("ace/mode/json");
+		 	editor.setValue(JSON.stringify(style, null, 3));
 
+		 	style.layers.forEach(function (layer) {
+				 	layer.interactive = true;
+		 	});
+		 	map = new mapboxgl.Map({
+				 container: 'map', // container id
+				 style: style,
+				 center: [2.27431,48.8189, 11], // starting position
+				 zoom: 12 // starting zoom
+		 	});
+	 	map.addControl(new mapboxgl.NavigationControl());
+		 	setMapClickListener();
+		 	return style
+ 	});
 
-    editor.setTheme("ace/theme/monokai");
-    editor.getSession().setMode("ace/mode/json");
-    editor.setValue(JSON.stringify(style, null, 3));
-
-  	style.layers.forEach(function (layer) {
-        layer.interactive = true;
-    });
-  	map = new mapboxgl.Map({
-  	    container: 'map', // container id
-  	    style: style,
-  	    center: [17.3364,67.6488, 11], // starting position
-  	    zoom: 12 // starting zoom
-  	});
-
-  	setMapClickListener();
-
-  });
 
   editor.commands.addCommand({
     name: 'Save',
@@ -192,37 +194,35 @@
         console.log('Failed to save style');
       }
     }
-    request.open('POST', 'http://localhost:8080/save', true);
+    request.open('POST', 'http://localhost:8081/save', true);
     request.send(style);
   }
 
-  function setMapClickListener() {
+	function setMapClickListener() {
     map.on('click', function (e) {
       popup.style.left = (e.point.x - 10) + 'px';
       popup.style.top = (e.point.y - 10) + 'px';
-      map.featuresAt(e.point, {radius: 10}, function (err, features) {
-        if (err) throw err;
-        console.log('Got features: ' + JSON.stringify(features, null, 2));
-        if (document.getElementById('features').style.visibility == 'visible') {
-        	document.getElementById('features').innerHTML = JSON.stringify(features, null, 2);
-        }
-        else {
-      	  document.getElementById('features').innerHTML = '';
-        }
-        console.log('Pos: ' + JSON.stringify(e.point) + ', zoom=' + map.getZoom());
-        if (Number(map.getZoom()) > Number(10.0)) {
-          var popupHtml = '<ul>';
-          features.forEach(function(feature) {
-            popupHtml += '<li onclick="openLayer(\'' + feature.layer.id + '\')">';
-            popupHtml += feature.layer.id;
-            popupHtml += '</li>';
-          });
-          popupHtml += '</ul>';
-          popup.style.visibility = 'visible';
-          popup.innerHTML = popupHtml;
-        }
+      features = map.queryRenderedFeatures(e.point, {radius: 10});
+      console.log('Got features: ' + JSON.stringify(features, null, 2));
+      if (document.getElementById('features').style.visibility == 'visible') {
+          document.getElementById('features').innerHTML = JSON.stringify(features, null, 2);
+      }
+      else {
+        document.getElementById('features').innerHTML = '';
+      }
+      console.log('Pos: ' + JSON.stringify(e.point) + ', zoom=' + map.getZoom());
+      if (Number(map.getZoom()) > Number(10.0)) {
+        var popupHtml = '<ul>';
+        features.forEach(function(feature) {
+          popupHtml += '<li onclick="openLayer(\'' + feature.layer.id + '\')">';
+          popupHtml += feature.layer.id;
+          popupHtml += '</li>';
+        });
+        popupHtml += '</ul>';
+        popup.style.visibility = 'visible';
+        popup.innerHTML = popupHtml;
+      }
       });
-  	});
   }
 
 </script>
